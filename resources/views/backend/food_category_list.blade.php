@@ -8,32 +8,57 @@
                   <h2>{{lang_trans('heading_food_category_list')}}</h2>
                   <div class="clearfix"></div>
               </div>
+
               <div class="x_content">
                   <br/>
                   <table id="datatable" class="table table-striped table-bordered">
                   <thead>
-                    <tr>
-                      <th>{{lang_trans('txt_sno')}}</th>
-                      <th>{{lang_trans('txt_category_name')}}</th>
-                      <th>{{lang_trans('txt_status')}}</th>
-                      <th>{{lang_trans('txt_action')}}</th>
-                    </tr>
+                      <tr>
+                          <th>{{ lang_trans('txt_sno') }}</th>
+                          <th>{{ lang_trans('txt_category_name') }}</th>
+                          <th>{{ lang_trans('txt_sub_category_name') }}</th>
+                          <th>{{ lang_trans('txt_status') }}</th>
+                          <th>{{ lang_trans('txt_action') }}</th>
+                      </tr>
                   </thead>
                   <tbody>
-                    @foreach($datalist as $k=>$val)
-                      <tr>
-                        <td>{{$k+1}}</td>
-                        <td>{{$val->name}}</td>
-                        <td>{!! getStatusBtn($val->status) !!}</td>
-                        <td>
-                          <a class="btn btn-sm btn-info" href="{{route('edit-food-category',[$val->id])}}"><i class="fa fa-pencil"></i></a>
-                          <button class="btn btn-danger btn-sm delete_btn" data-url="{{route('delete-food-category',[$val->id])}}" title="{{lang_trans('btn_delete')}}"><i class="fa fa-trash"></i></button>
-                        </td>
-                      </tr>
-                    @endforeach
+                      @foreach($datalist as $k => $val)
+                          <tr>
+                              <td>{{ $k + 1 }}</td>
+                              <td>{{ $val->name }}</td>
+                              <td>
+                                  @if($val->children->count() > 0)
+                                      <ul style="list-style-type: none; padding-left: 0;">
+                                          @foreach($val->children as $child)
+                                              <li>
+                                                  -> {{ $child->name }} 
+                                                  <a href="{{ route('edit-food-category', [$child->id]) }}" class="btn btn-sm btn-info">
+                                                      <i class="fa fa-pencil"></i>
+                                                  </a>
+                                              </li>
+                                          @endforeach
+                                      </ul>
+                                  @else
+                                      {{ lang_trans('txt_no_subcategory') }}
+                                  @endif
+                              </td>
+                              <td>{!! getStatusBtn($val->status) !!}</td>
+                              <td>
+                                  <a class="btn btn-sm btn-info" href="{{ route('edit-food-category', [$val->id]) }}">
+                                      <i class="fa fa-pencil"></i>
+                                  </a>
+                                  {{-- <button class="btn btn-danger btn-sm delete_btn" 
+                                          data-url="{{ route('delete-food-category', [$val->id]) }}" 
+                                          title="{{ lang_trans('btn_delete') }}">
+                                      <i class="fa fa-trash"></i>
+                                  </button> --}}
+                              </td>
+                          </tr>
+                      @endforeach
                   </tbody>
-                </table>
+              </table>
               </div>
+
           </div>
       </div>
   </div>

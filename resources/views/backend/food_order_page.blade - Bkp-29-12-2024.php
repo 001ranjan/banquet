@@ -65,50 +65,61 @@
                   <h2>{{lang_trans('heading_food_item')}}</h2>
                   <div class="clearfix"></div>
               </div>
-              <div class="x_content">                
-                  @if($categories->count())
-                    <div class="row mb-3">
-                        <div class="col-md-4 col-sm-4 col-xs-12">
-                            <input type='text' id='txt_searchall' placeholder='Search Items...' class="form-control">
-                        </div>
-                        <div class="col-md-4 col-sm-4 col-xs-12">
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-outline-primary filter-button active" data-filter="all">All</button>
-                                <button type="button" class="btn btn-outline-success filter-button" data-filter="veg">Veg</button>
-                                <button type="button" class="btn btn-outline-danger filter-button" data-filter="non-veg">Non-Veg</button>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-sm-4 col-xs-12 text-right">
-                            <button class="btn btn-success" type="submit">{{ lang_trans('btn_submit') }}</button>
-                        </div>
+              <div class="x_content">
+                  @if($categories_list->count())
+                    <div class="col-md-4 col-sm-4 col-xs-12">
+                      <input type='text' id='txt_searchall' placeholder='Search Items...' class="form-control">
+                    </div>
+                    <div class="col-md-8 col-sm-8 col-xs-12 text-right pull-right">
+                        <button class="btn btn-success" type="submit">{{lang_trans('btn_submit')}}</button>
                     </div>
                     <br/>
+                    <br/>
+                    <br/>
                   @endif
-
-                  {{ Form::hidden('reservation_id', $reservationId) }}
-
+                  {{ Form::hidden('reservation_id',$reservationId) }}
                   <table id="datatable__" class="table table-bordered">
-                    @if($categories_tree->isEmpty())
-                        <tr>
-                            <td colspan="4">
-                                @can('add-food-category')
-                                    <a class="btn btn-sm btn-danger" href="{{ route('add-food-category') }}" target="_blank">
-                                        <i class="fa fa-plus"></i>&nbsp;{{ lang_trans('sidemenu_foodcat_add') }}
-                                    </a>
-                                @endcan
-                                @can('add-food-item')
-                                    <a class="btn btn-sm btn-primary" href="{{ route('add-food-item') }}" target="_blank">
-                                        <i class="fa fa-plus"></i>&nbsp;{{ lang_trans('sidemenu_fooditem_add') }}
-                                    </a>
-                                @endcan
-                            </td>
+                    @if($categories_list->count() == 0)
+                        <tr class="">
+                          <td colspan="">
+                            @isPermission('add-food-category')
+                              <a class="btn btn-sm btn-danger" href="{{route('add-food-category')}}" target="_blank"><i class="fa fa-plus"></i>&nbsp;{{lang_trans('sidemenu_foodcat_add')}}</a>
+                            @endisPermission
+                            @isPermission('add-food-item')
+                              <a class="btn btn-sm btn-primary" href="{{route('add-food-item')}}" target="_blank"><i class="fa fa-plus"></i>&nbsp;{{lang_trans('sidemenu_fooditem_add')}}</a>
+                            @endisPermission
+                          </td>
                         </tr>
                     @endif
-                
-                    @foreach($categories_tree as $category)
-                        @include('backend.partials.food_category_tree', ['category' => $category, 'level' => 0])
+                    @foreach($categories_list as $k=>$val)
+                      <tr class="tr-bg">
+                        <td colspan="4"><b>{{$val->name}}</b></td>
+                      </tr>
+                      @foreach($val->food_items as $key=>$value)
+                        <tr class="tr-items">
+                          <td width="5%">{{$i++}}.</td>
+                          <td>{{$value->name}}</td>
+                          <td width="15%">{{getCurrencySymbol()}} {{$value->price}}</td>
+                          <td width="12%">
+                            <div class="input-group">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-danger btn-number"  data-type="minus" data-field="{{'item_qty['.$value->id.']'}}">
+                                      <span class="glyphicon glyphicon-minus"></span>
+                                    </button>
+                                </span>
+                                {{Form::number('item_qty['.$value->id.']',0,['data-price'=>$value->price,'class'=>"form-control input-number text-center", "placeholder"=>lang_trans('ph_qty'),"min"=>0, 'max'=>100, 'readonly'=>true,'style'=>'height: 33px;'])}}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-success btn-number" data-type="plus" data-field="{{'item_qty['.$value->id.']'}}">
+                                        <span class="glyphicon glyphicon-plus"></span>
+                                    </button>
+                                </span>
+                            </div>
+                            {{Form::hidden('items['.$value->id.']',$val->id.'~'.$val->name.'~'.$value->name.'~'.$value->price,['data-price'=>$value->price,'class'=>"form-control col-md-6 col-xs-12 item_qty","min"=>0])}}
+                          </td>
+                        </tr>
+                      @endforeach
                     @endforeach
-                </table>
+                  </table>                
               </div>
           </div>
       </div>
@@ -155,7 +166,7 @@
         </div>
       </div>
     </div>
-  @if($categories->count())
+  @if($categories_list->count())
     <div class="row">
       <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
@@ -176,32 +187,6 @@
   globalVar.page = 'food_order_page';
   globalVar.gstPercentFood = {{$gstPercFood}};
   globalVar.cgstPercentFood = {{$cgstPercFood}};
-
-
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-          const filterType = this.dataset.type; // Get the filter type (all, veg, non-veg)
-          const rows = document.querySelectorAll('.tr-items, .tr-bg');
-
-          rows.forEach(row => {
-              const rowType = row.getAttribute('data-type');
-              if (filterType === 'all' || rowType === filterType) {
-                  row.style.display = ''; // Show row
-              } else {
-                  row.style.display = 'none'; // Hide row
-              }
-          });
-      });
-  });
-
-
-  // JavaScript/jQuery validation example
-  $('#food-order-form').submit(function(e) {
-      if ($('input[name="selected_items[]"]:checked').length === 0) {
-          e.preventDefault(); // Prevent form submission
-          alert('Please select at least one food item.');
-      }
-  });
 </script> 
 <script type="text/javascript" src="{{URL::asset('public/js/page_js/page.js')}}"></script>       
 @endsection     

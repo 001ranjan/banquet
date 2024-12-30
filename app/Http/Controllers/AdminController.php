@@ -19,6 +19,7 @@ use App\Models\MediaFile;
 use App\Models\Permission;
 use App\Models\Season;
 use App\Models\PaymentHistory;
+use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
@@ -848,62 +849,123 @@ class AdminController extends Controller
     /* ***** End RoomReservation Functions ***** */
 
     /* ***** Start FoodCategory Functions ***** */
-    public function addFoodCategory() {
-        return view('backend/food_category_add_edit',$this->data);
+    public function addFoodCategory()
+    {
+        // $this->data['categories'] = FoodCategory::where('parent_id',0)
+        //     ->where('status', 1)
+        //     ->where('is_deleted', 0)
+        //     ->pluck('name', 'id')
+        //     ->toArray();
+
+        $this->data['categories'] = $this->getCategoryHierarchy();
+
+        return view('backend.food_category_add_edit', $this->data);
     }
 
-    public function editFoodCategory(Request $request){
-        $this->data['data_row']=FoodCategory::whereId($request->id)->first();
-        if(!$this->data['data_row']){
+    public function editFoodCategory(Request $request)
+    {
+        $this->data['data_row'] = FoodCategory::find($request->id);
+
+        if (!$this->data['data_row']) {
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
         }
-        return view('backend/food_category_add_edit',$this->data);
+
+        // $this->data['categories'] = FoodCategory::where('parent_id',0)
+        //     ->where('id', '!=', $this->data['data_row']->id) // Avoid self-referencing
+        //     ->where('status', 1)
+        //     ->where('is_deleted', 0)
+        //     ->pluck('name', 'id')
+        //     ->toArray();
+
+        $this->data['categories'] = $this->getCategoryHierarchy();
+
+        return view('backend.food_category_add_edit', $this->data);
     }
 
-    public function saveFoodCategory(Request $request) {
-        if($request->id>0){
-            if($this->core->checkWebPortal()==0){
-                return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
-            } 
-            $success = config('constants.FLASH_REC_UPDATE_1');
-            $error = config('constants.FLASH_REC_UPDATE_0');
-        } else {
-            $success = config('constants.FLASH_REC_ADD_1');
-            $error = config('constants.FLASH_REC_ADD_0');
-        }
-        $res = FoodCategory::updateOrCreate(['id'=>$request->id],$request->except(['_token']));
-        
-        if($res){
-            return redirect()->back()->with(['success' => $success]);
-        }
-        return redirect()->back()->with(['error' => $error]);
-    }
-
-    public function listFoodCategory() {
-        $this->data['datalist']=FoodCategory::whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-        return view('backend/food_category_list',$this->data);
-    }
-
-    public function deleteFoodCategory(Request $request) {
-        if($this->core->checkWebPortal()==0){
+    public function saveFoodCategory(Request $request)
+    {
+        if ($this->core->checkWebPortal() == 0) {
             return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
-        }  
-        if(FoodCategory::whereId($request->id)->update(['is_deleted'=>1])){
-            return redirect()->back()->with(['success' => config('constants.FLASH_REC_DELETE_1')]);
         }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $successMessage = $request->id ? config('constants.FLASH_REC_UPDATE_1') : config('constants.FLASH_REC_ADD_1');
+        $errorMessage = $request->id ? config('constants.FLASH_REC_UPDATE_0') : config('constants.FLASH_REC_ADD_0');
+
+        $res = FoodCategory::updateOrCreate(
+            ['id' => $request->id],
+            $request->except(['_token'])
+        );
+
+        if ($res) {
+            return redirect()->route('list-food-category')->with(['success' => $successMessage]);
+        }
+
+        return redirect()->back()->with(['error' => $errorMessage]);
+    }
+
+    public function listFoodCategory()
+    {
+        $this->data['datalist'] = FoodCategory::with(['children', 'food_items'])
+            ->where('parent_id', 0)
+            ->where('status', 1)
+            ->where('is_deleted', 0)
+            ->orderBy('name', 'ASC')
+            ->get();
+
+        return view('backend.food_category_list', $this->data);
+    }
+
+    public function deleteFoodCategory(Request $request)
+    {
+        if ($this->core->checkWebPortal() == 0) {
+            return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
+        }
+
+        $res = FoodCategory::whereId($request->id)->update(['is_deleted' => 1]);
+
+        if ($res) {
+            return redirect()->route('list-food-category')->with(['success' => config('constants.FLASH_REC_DELETE_1')]);
+        }
+
         return redirect()->back()->with(['error' => config('constants.FLASH_REC_DELETE_0')]);
+    }
+
+    private function getCategoryHierarchy($parentId = 0, $level = 0) {
+        $categories = FoodCategory::where('parent_id', $parentId)
+            ->where('status', 1)
+            ->where('is_deleted', 0)
+            ->orderBy('name', 'ASC')
+            ->get();
+    
+        $hierarchy = [];
+        foreach ($categories as $category) {
+            $hierarchy[] = [
+                'id' => $category->id,
+                'name' => str_repeat('— ', $level) . $category->name,
+            ];
+            $hierarchy = array_merge($hierarchy, $this->getCategoryHierarchy($category->id, $level + 1));
+        }
+        return $hierarchy;
     }
     /* ***** End FoodCategory Functions ***** */
 
     /* ***** Start FoodItems Functions ***** */
     public function addFoodItem() {
-        $this->data['category_list']=$this->getFoodCategoryList();
+        $this->data['category_list'] = $this->getCategoryHierarchy();
         return view('backend/food_item_add_edit',$this->data);
     }
 
     public function editFoodItem(Request $request){
-        $this->data['category_list']=$this->getFoodCategoryList();
-        $this->data['data_row']=FoodItem::whereId($request->id)->first();
+        $this->data['category_list'] = $this->getCategoryHierarchy();
+        $this->data['data_row'] = FoodItem::whereId($request->id)->first();
         if(!$this->data['data_row']){
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
         }
@@ -911,23 +973,37 @@ class AdminController extends Controller
     }
 
     public function saveFoodItem(Request $request) {
-        if($request->id>0){
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'required|exists:food_categories,id', // Correct validation rule
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric',
+            'description' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+    
+        if($request->id > 0) {
             $success = config('constants.FLASH_REC_UPDATE_1');
             $error = config('constants.FLASH_REC_UPDATE_0');
         } else {
             $success = config('constants.FLASH_REC_ADD_1');
             $error = config('constants.FLASH_REC_ADD_0');
         }
-        $res = FoodItem::updateOrCreate(['id'=>$request->id],$request->except(['_token']));
-        
-        if($res){
+    
+        // Save or update the food item
+        $res = FoodItem::updateOrCreate(['id' => $request->id], $request->except(['_token']));
+    
+        if ($res) {
             return redirect()->back()->with(['success' => $success]);
         }
+    
         return redirect()->back()->with(['error' => $error]);
     }
 
     public function listFoodItem() {
-        $this->data['datalist']=FoodItem::whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
+        $this->data['datalist'] = FoodItem::whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
         return view('backend/food_item_list',$this->data);
     }
 
@@ -945,7 +1021,7 @@ class AdminController extends Controller
     }
 
     public function editExpenseCategory(Request $request){
-        $this->data['data_row']=ExpenseCategory::whereId($request->id)->first();
+        $this->data['data_row'] = ExpenseCategory::whereId($request->id)->first();
         if(!$this->data['data_row']){
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
         }
@@ -972,7 +1048,7 @@ class AdminController extends Controller
     }
 
     public function listExpenseCategory() {
-        $this->data['datalist']=ExpenseCategory::whereStatus(1)->orderBy('name','ASC')->get();
+        $this->data['datalist'] = ExpenseCategory::whereStatus(1)->orderBy('name','ASC')->get();
         return view('backend/expenses/category_list',$this->data);
     }
 
@@ -989,7 +1065,7 @@ class AdminController extends Controller
 
     /* ***** Start Expenses Functions ***** */
     public function addExpense() {
-        $this->data['category_list']=$this->getExpenseCategoryList();
+        $this->data['category_list'] = $this->getExpenseCategoryList();
         return view('backend/expenses/add_edit',$this->data);
     }
 
@@ -1048,8 +1124,8 @@ class AdminController extends Controller
 
     public function listExpense() {
         $startDate = getNextPrevDate('prev');
-        $this->data['category_list']=$this->getExpenseCategoryList();
-         $this->data['datalist']=Expense::whereDate('datetime', '>=', $startDate." 00:00:00")->whereDate('datetime', '<=', DB::raw('CURDATE()'))->orderBy('datetime','DESC')->get();
+        $this->data['category_list'] = $this->getExpenseCategoryList();
+         $this->data['datalist'] = Expense::whereDate('datetime', '>=', $startDate." 00:00:00")->whereDate('datetime', '<=', DB::raw('CURDATE()'))->orderBy('datetime','DESC')->get();
          $this->data['search_data'] = ['category_id'=>'','date_from'=>$startDate, 'date_to'=>date('Y-m-d')];
         return view('backend/expenses/list',$this->data);
     }
@@ -1068,7 +1144,7 @@ class AdminController extends Controller
     }
 
     public function editProduct(Request $request){
-        $this->data['data_row']=Product::whereId($request->id)->first();
+        $this->data['data_row'] = Product::whereId($request->id)->first();
         if(!$this->data['data_row']){
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
         }
@@ -1092,7 +1168,7 @@ class AdminController extends Controller
     }
 
     public function listProduct() {
-        $this->data['datalist']=Product::whereIn('status',[1,2])->whereIsDeleted(0)->orderBy('stock_qty','ASC')->get();
+        $this->data['datalist'] = Product::whereIn('status',[1,2])->whereIsDeleted(0)->orderBy('stock_qty','ASC')->get();
         return view('backend/product_list',$this->data);
     }
 
@@ -1107,13 +1183,13 @@ class AdminController extends Controller
     }
 
     public function inOutStock() {
-        $this->data['product_list']=$this->getProductList();
-        $this->data['room_list']=getRoomList();
+        $this->data['product_list'] = $this->getProductList();
+        $this->data['room_list'] = getRoomList();
         return view('backend/stock_in_out',$this->data);
     }
 
     public function saveStock(Request $request) {
-        $request->merge(['added_by'=>Auth::user()->id]);
+        $request->merge(['added_by' => Auth::user()->id]);
         $res = StockHistory::insert($request->except(['_token']));
         if($res){
             $this->stcokUpdate($request->stock_is, $request->product_id, $request->qty);
@@ -1124,9 +1200,9 @@ class AdminController extends Controller
 
     public function stockHistory() {
         $startDate = getNextPrevDate('prev');
-        $this->data['datalist']=StockHistory::whereDate('created_at', '>=', $startDate." 00:00:00")->whereDate('created_at', '<=', DB::raw('CURDATE()'))->orderBy('id','DESC')->get();
-        $this->data['products']=Product::where('is_deleted',0)->pluck('name','id');
-        $this->data['rooms']=getRoomList();
+        $this->data['datalist'] = StockHistory::whereDate('created_at', '>=', $startDate." 00:00:00")->whereDate('created_at', '<=', DB::raw('CURDATE()'))->orderBy('id','DESC')->get();
+        $this->data['products'] = Product::where('is_deleted',0)->pluck('name','id');
+        $this->data['rooms'] = getRoomList();
         $this->data['search_data'] = ['product_id'=>'','is_stock'=>'','date_from'=>$startDate, 'date_to'=>date('Y-m-d')];
         return view('backend/stock_history',$this->data);
     }
@@ -1155,26 +1231,126 @@ class AdminController extends Controller
 
     /* ***** Start FoodOrders Functions ***** */
     public function listOrders() {
-        $this->data['datalist']=Order::whereDate('created_at', DB::raw('CURDATE()'))->where('status','!=',4)->orderBy('id','DESC')->get();
+        $this->data['datalist'] = Order::whereDate('created_at', DB::raw('CURDATE()'))->where('status','!=',4)->orderBy('id','DESC')->get();
         $this->data['search_data'] = ['date_from'=>date('Y-m-d'), 'date_to'=>date('Y-m-d')];
         return view('backend/orders_list',$this->data);
     }
 
+    // public function foodOrder() {
+    //     $this->data['categories_list'] = FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
+    //     return view('backend/food_order_page',$this->data);
+    // }
+
+    // public function foodOrderTable(Request $request) {
+    //     $this->data['categories_list'] = FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
+    //     $this->data['order_row'] = Order::where('id',$request->segment(3))->first();
+    //     return view('backend/food_order_table_page',$this->data);
+    // }
+
+    // public function foodOrderFinal(Request $request) {
+    //     $this->data['categories_list'] = FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
+    //     $this->data['order_row'] = Order::where('id',$request->segment(3))->first();
+    //     return view('backend/food_order_final_page',$this->data);
+    // }
+
+    // public function foodOrder() {
+    //     // Get categories and their food items
+    //     $this->data['categories'] = FoodCategory::with('food_items')
+    //         ->where('status', 1)
+    //         ->where('is_deleted', 0)
+    //         // ->orderBy('name', 'ASC')
+    //         ->get();
+    
+    //     // Group categories by their parent_id
+    //     $groupedCategories = $this->data['categories']->groupBy('parent_id');
+    
+    //     // Recursive function to build the hierarchy
+    //     $buildTree = function ($parentId) use ($groupedCategories, &$buildTree) {
+    //         return $groupedCategories->get($parentId, collect())
+    //             ->map(function ($category) use ($buildTree) {
+    //                 return [
+    //                     'id' => $category->id,
+    //                     'name' => $category->name,
+    //                     'food_items' => $category->food_items,
+    //                     'children' => $buildTree($category->id),
+    //                 ];
+    //             });
+    //     };
+    
+    //     $this->data['categories_tree'] = $buildTree(0); // Start with root categories (parent_id = 0)
+    
+    //     return view('backend/food_order_page', $this->data);
+    // }
+
     public function foodOrder() {
-        $this->data['categories_list']=FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-        return view('backend/food_order_page',$this->data);
-    }
+        // Get categories and their food items
+        $this->data['categories'] = FoodCategory::with(['food_items' => function ($query) {
+            $query->where('status', 1);
+        }])
+        ->where('status', 1)
+        ->where('is_deleted', 0)
+        ->get();
+    
+        // Group categories by their parent_id
+        $groupedCategories = $this->data['categories']->groupBy('parent_id');
+    
+        // Recursive function to build the hierarchy
+        // $buildTree = function ($parentId) use ($groupedCategories, &$buildTree) {
+        //     return $groupedCategories->get($parentId, collect())
+        //         ->map(function ($category) use ($buildTree) {
+        //             return [
+        //                 'id' => $category->id,
+        //                 'name' => $category->name,
+        //                 'food_items' => $category->food_items,
+        //                 'children' => $buildTree($category->id),
+        //             ];
+        //         });
+        // };
 
+        $buildTree = function ($parentId) use ($groupedCategories, &$buildTree) {
+            return $groupedCategories->get($parentId, collect())
+                ->map(function ($category) use ($buildTree) {
+                    // Determine if the category is Veg or Non-Veg
+                    $type = ($category->parent_id == 0 && $category->id == 1) ? 'veg' :
+                            (($category->parent_id == 0 && $category->id == 2) ? 'non-veg' : null);
+    
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'type' => $type, // Assign type (Veg or Non Veg)
+                        'food_items' => $category->food_items,
+                        'children' => $buildTree($category->id),
+                    ];
+                });
+        };
+    
+        $this->data['categories_tree'] = $buildTree(0);
+    
+        return view('backend/food_order_page', $this->data);
+    }
+    
     public function foodOrderTable(Request $request) {
-        $this->data['categories_list']=FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-        $this->data['order_row']=Order::where('id',$request->segment(3))->first();
-        return view('backend/food_order_table_page',$this->data);
+        // Get categories with their food items and children (subcategories)
+        $this->data['categories_list'] = FoodCategory::with('food_items', 'children')
+            ->where('status', 1)
+            ->where('is_deleted', 0)
+            ->orderBy('name', 'ASC')
+            ->get();
+        // Get the specific order
+        $this->data['order_row'] = Order::where('id', $request->segment(3))->first();
+        return view('backend/food_order_table_page', $this->data);
     }
-
+    
     public function foodOrderFinal(Request $request) {
-        $this->data['categories_list']=FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-        $this->data['order_row']=Order::where('id',$request->segment(3))->first();
-        return view('backend/food_order_final_page',$this->data);
+        // Get categories with their food items and children (subcategories)
+        $this->data['categories_list'] = FoodCategory::with('food_items', 'children')
+            ->where('status', 1)
+            ->where('is_deleted', 0)
+            ->orderBy('name', 'ASC')
+            ->get();
+        // Get the specific order
+        $this->data['order_row'] = Order::where('id', $request->segment(3))->first();
+        return view('backend/food_order_final_page', $this->data);
     }
 
     public function saveFoodOrder(Request $request){
@@ -1309,6 +1485,22 @@ class AdminController extends Controller
         }
          $this->data['type'] = $type;
         return view('backend/kitchen_invoice',$this->data);
+    }
+
+    public function processFoodOrder(Request $request) {
+        // Get the selected items (food item IDs)
+        $selectedItems = $request->input('selected_items', []); // Default to empty array if no items selected
+    
+        // Process the selected food items and quantities
+        foreach ($selectedItems as $itemId) {
+            $quantity = $request->input("item_qty[$itemId]", 0); // Get the quantity for the selected item
+    
+            // Perform actions like storing the order, calculating prices, etc.
+            // Example: Save the food order to a database or session
+        }
+    
+        // Return a response (e.g., redirect to another page or show a success message)
+        return redirect()->route('food-order-summary');
     }
     /* ***** End FoodOrders Functions ***** */
 

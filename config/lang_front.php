@@ -711,9 +711,21 @@ return [
             'en'=>'GST Apply',
             'hi'=>'जीएसटी लागू',
         ],
+        'txt_parent_category'=>[
+            'en'=>'Parent Category',
+            'hi'=>'मूल श्रेणी',
+        ],
         'txt_category_name'=>[
             'en'=>'Category Name',
             'hi'=>'श्रेणी नाम',
+        ],
+        'txt_sub_category_name'=>[
+            'en'=>'Sub Category Name',
+            'hi'=>'उप श्रेणी का नाम',
+        ],
+        'txt_no_subcategory'=>[
+            'en'=>'No Sub Category',
+            'hi'=>'उप श्रेणी का नाम',
         ],
         'txt_status'=>[
             'en'=>'Status',
