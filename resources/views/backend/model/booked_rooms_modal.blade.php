@@ -16,55 +16,62 @@
                 </tr>
               </thead>
               <tbody>
-                @if($val->booked_rooms) 
-                  @foreach($val->booked_rooms as $key => $roomInfo)
+              @if($val->booked_rooms) 
+                @php 
+                  $serialNo = 1; 
+                  @endphp    
+                @foreach($val->booked_rooms as $roomInfo) 
                     @php
-                      $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
-                      $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
-                      $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
-                      $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
-                      $amountPerRoom = $priceInfo[1];
+                        $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
+                        $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
+                        $durOfStayPerRoom = (strtotime($checkOut) - strtotime($checkIn)) / (60 * 60 * 24) + 1;
+                        $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
+                        $amountPerRoom = $priceInfo[1];
                     @endphp
-                    <tr class="per_room_tr">
-                      <td class="text-center">{{$key+1}}</td>
-                      <td>
-                          {{ ($roomInfo->room_type) ? $roomInfo->room_type->title : ""}}<br/>
-                          ({{lang_trans('txt_room_num')}} : {{$roomInfo->room->room_no}})
-                      </td>
-                      <th class="text-center">
-                        <span class="duration_of_per_room {{ ($roomInfo->swapped_from_room) ? 'swapped_room' : 'no_swapped_room'}}">{{$durOfStayPerRoom}}</span>
-                      </th>
-                      <td>
-                        <div class="scrolable-elem">
-                          <table class="table table-striped table-bordered">
-                            <thead>
-                              <tr>
-                                <th width="20%" class="text-center">{{lang_trans('txt_date')}}</th>
-                                <th width="20%" class="text-center">{{lang_trans('txt_price')}}</th>
-                              </tr>
-                            </thead>
-                            <tbody class="">
-                              @forelse($priceInfo[0] as $dt=>$rs)
-                                <tr>
-                                  <td class="text-center">{{dateConvert($dt)}}</td>
-                                  <td class="text-right">{{getCurrencySymbol()}} {{numberFormat($rs['price'])}}</td>
-                                </tr>
-                              @empty
-                              @endforelse
-                              <tr>
-                                <td></td>
-                                <td class="text-right"><b>{{getCurrencySymbol()}} {{($amountPerRoom)}}</b></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </td>
-                    </tr>
-                  @endforeach
-                @endif
-              </tbody>
-            </table>
-        </div>
+
+                    @if (!empty($priceInfo[0])) 
+                        <tr class="per_room_tr">
+                            <td class="text-center">{{$serialNo}}</td> 
+                            <td>
+                                {{ ($roomInfo->room_type) ? $roomInfo->room_type->title : ""}}<br/>
+                                ({{lang_trans('txt_room_num')}} : {{$roomInfo->room->room_no}})
+                            </td>
+                            <th class="text-center">
+                                <span class="duration_of_per_room {{ ($roomInfo->swapped_from_room) ? 'swapped_room' : 'no_swapped_room'}}">{{$durOfStayPerRoom}}</span>
+                            </th>
+                            <td>
+                                <div class="scrolable-elem">
+                                    <table class="table table-striped table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th width="20%" class="text-center">{{lang_trans('txt_date')}}</th>
+                                                <th width="20%" class="text-center">{{lang_trans('txt_price')}}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($priceInfo[0] as $dt => $rs)
+                                                <tr>
+                                                    <td class="text-center">{{dateConvert($dt)}}</td>
+                                                    <td class="text-right">{{getCurrencySymbol()}} {{numberFormat($rs['price'])}}</td>
+                                                </tr>
+                                            @endforeach
+                                            <tr>
+                                                <td></td>
+                                                <td class="text-right"><b>{{getCurrencySymbol()}} {{($amountPerRoom)}}</b></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        @php $serialNo++; @endphp 
+                    @endif
+                @endforeach
+                
+            @endif
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

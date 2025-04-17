@@ -9,4 +9,5 @@ class OrderItem extends Model
 	protected $casts = [
         'json_data' => 'array',  // Automatically cast json_data as an array
     ];
+    
 }

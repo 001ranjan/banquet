@@ -21,52 +21,48 @@
                 </div>
                 <div class="x_content">
                     <div class="row">
-                        <div class="col-md-4 col-sm-4 col-xs-6">
-                          <label class="control-label"> {{lang_trans('btn_checkin')}}<span class="required">*</span></label>
-                          {{ Form::text('check_in_date', null, [
-                              'class' => "form-control datetimepicker",
-                              'id' => "check_in_date",
-                              'placeholder' => lang_trans('ph_date'),
-                              'autocomplete' => "off"
-                          ]) }}
+                      <div class="row d-flex align-items-center">
+                        <div class="col-md-2 col-sm-4 col-xs-6">
+                            <label class="control-label"> {{lang_trans('btn_checkin')}}<span class="required">*</span></label>
+                            {{ Form::text('check_in_date', null, [
+                                'class' => "form-control",
+                                'id' => "check_in_date",
+                                'placeholder' => lang_trans('ph_date'),
+                                'autocomplete' => "off"
+                            ]) }}
                         </div>
-                        <div class="col-md-4 col-sm-4 col-xs-12 hide_elem_">
-                          <label class="control-label"> {{lang_trans('btn_checkout')}} <span class="required">*</span></label>
-                          {{ Form::text('check_out_date', null, [
-                              'class' => "form-control datetimepicker",
-                              'id' => "check_out_date",
-                              'placeholder' => lang_trans('ph_date'),
-                              'autocomplete' => "off"
-                          ]) }}
+                        <div class="col-md-2 col-sm-4 col-xs-6">
+                            <label class="control-label"> {{lang_trans('btn_checkout')}} <span class="required">*</span></label>
+                            {{ Form::text('check_out_date', null, [
+                                'class' => "form-control",
+                                'id' => "check_out_date",
+                                'placeholder' => lang_trans('ph_date'),
+                                'autocomplete' => "off"
+                            ]) }}
                         </div>
-                        <div class="col-md-4 col-sm-4 col-xs-12">
-                          <label class="control-label"> {{ lang_trans('txt_event_type') }} <span class="required">*</span></label>
-                          {{ Form::select('event_type', [
-                              '' => 'Select Event Type',
-                              'conference' => 'Conference',
-                              'wedding' => 'Wedding',
-                              'party' => 'Party',
-                              'meeting' => 'Meeting'
-                          ], null, ['class' => "form-control col-md-6 col-xs-12", "id" => "event_type"]) }}
+                        <div class="col-md-2 col-sm-4 col-xs-6">
+                            <label class="control-label"> {{ lang_trans('txt_event_type') }} <span class="required">*</span></label>
+                            {{ Form::select('event_type', [
+                                '' => 'Select Event Type',
+                                'conference' => 'Conference',
+                                'wedding' => 'Wedding',
+                                'party' => 'Party',
+                                'meeting' => 'Meeting'
+                            ], null, ['class' => "form-control", "id" => "event_type"]) }}
                         </div>
                         {{ Form::hidden('duration_of_stay', 1, ['id' => 'duration_of_stay']) }}
-                        <div class="col-md-2 col-sm-2 col-xs-12">
+                        <div class="col-md-2 col-sm-4 col-xs-6">
                             <label class="control-label"> {{lang_trans('txt_adults')}} <span class="required">*</span></label>
-                            {{Form::number('adult',1,['class'=>"form-control col-md-7 col-xs-12", "id"=>"adult", "required"=>"required","placeholder"=>lang_trans('ph_enter').lang_trans('txt_adults'),"min"=>1])}}
+                            {{Form::number('adult','',[
+                                'class'=>"form-control",
+                                "id"=>"adult",
+                                "required"=>"required",
+                                "placeholder"=>lang_trans('ph_enter').lang_trans('txt_adults'),
+                                "min"=>0
+                            ])}}
                         </div>
-                        {{-- <div class="col-md-4 col-sm-4 col-xs-12">
-                          <label class="control-label"> {{ lang_trans('txt_time_slot') }} </label>
-                          {{ Form::select('time_slot', [
-                              '' => 'Select Time Slot',
-                              'Full Day' => 'Full Day',
-                              'Custom' => 'Custom'
-                          ], null, ['class' => "form-control col-md-6 col-xs-12", "id" => "time_slot"]) }}
-                        </div> --}}
                         {{ Form::hidden('kids', 0, ['id' => 'kids']) }}
-                        {{-- <div class="col-md-4 col-sm-4 col-xs-12" id="custom_time_picker" style="display: none;">
-                            <label class="control-label"> {{ lang_trans('txt_select_time') }} </label>
-                            <input type="time" class="form-control" name="custom_time" id="custom_time">
-                        </div> --}}
+                      </div>
                     </div>
                     <div class="ln_solid"></div>
                     <div class="col-md-12 col-sm-12 col-xs-12 text-right">
@@ -85,7 +81,6 @@
       {{Form::hidden('check_out_date', $uri_params['check_out_date'])}}
       {{Form::hidden('duration_of_stay', $uri_params['duration_of_stay'])}}
       {{Form::hidden('event_type', $uri_params['event_type'])}}
-      {{-- {{Form::hidden('time_slot', $uri_params['time_slot'])}} --}}
       {{Form::hidden('adult', $uri_params['adult'])}}
       {{Form::hidden('kids', $uri_params['kids'])}}
       <div class="row" id="room_list_section">
@@ -189,7 +184,7 @@
                   <div class="row"> 
                   <div class="col-md-4 col-sm-4 col-xs-12">
                         <label class="control-label">{{lang_trans('txt_guest')}}</label>
-                        {{Form::text('selected_customer_id',null,['class'=>"form-", "id"=>"customers", "placeholder"=>lang_trans('ph_select')])}}
+                        {{Form::text('selected_customer_id',null,['class'=>"form-", "id"=>"customers",'required'=>true, "placeholder"=>lang_trans('ph_select')])}}
                     </div>
                   </div>
                 </div>
@@ -271,10 +266,10 @@
                           <label class="control-label"> {{lang_trans('txt_company_gst_num')}}</label>
                           {{Form::text('company_gst_num',null,['class'=>"form-control col-md-6 col-xs-12", "id"=>"company_gst_num", "placeholder"=>lang_trans('ph_enter').lang_trans('txt_company_gst_num')])}}
                         </div>
-                        <div class="col-md-4 col-sm-4 col-xs-12">
+                        <!-- <div class="col-md-4 col-sm-4 col-xs-12">
                           <label class="control-label"> {{lang_trans('txt_room_plan')}}</label>
                           {{ Form::select('room_plan',config('constants.ROOM_PLANS'),null,['class'=>'form-control col-md-6 col-xs-12','placeholder'=>lang_trans('ph_select')]) }}
-                        </div>
+                        </div> -->
                         @if(!$quickCheckIn)
                           <div class="col-md-4 col-sm-4 col-xs-12">
                             <label class="control-label"> {{lang_trans('txt_booked_by')}}</label>
@@ -389,31 +384,32 @@
     @endif
 
     <div class="row">
-        <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel">
-                <div class="x_title">
-                    <h2>{{lang_trans('heading_payment_info')}}</h2>
-                    <div class="clearfix"></div>
-                </div>
-                <div class="x_content">
-                    <div class="row">
-                        <div class="col-md-4 col-sm-4 col-xs-12">
-                            <label class="control-label"> {{lang_trans('txt_advance_payment')}}</label>
-                            {{Form::number('advance_payment',null,['class'=>"form-control col-md-7 col-xs-12", "id"=>"advance_payment", "placeholder"=>lang_trans('ph_enter').lang_trans('txt_advance_payment'),"min"=>0])}}
-                        </div>
-                        <div class="col-md-4 col-sm-4 col-xs-12">
-                          <label class="control-label"> {{lang_trans('txt_mode_of_payment')}}</label>
-                            {{Form::select('payment_mode',config('constants.PAYMENT_MODES'),null,['class'=>"form-control", 'required'=>true, "placeholder"=>"--Select--"])}}
-                        </div>
-                      </div>
-                      <div class="ln_solid"></div>
-                      <div class="col-md-12 col-sm-12 col-xs-12 text-right">
-                          <button class="btn btn-success btn-submit-form" type="submit" disabled_>{{lang_trans('btn_submit')}}</button>
-                      </div>
-                  </div>
-              </div>
+      <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>{{lang_trans('heading_payment_info')}}</h2>
+            <div class="clearfix"></div>
           </div>
+          <div class="x_content">
+            <div class="row">
+              <div class="col-md-4 col-sm-4 col-xs-12">
+                <label class="control-label"> {{lang_trans('txt_advance_payment')}}</label><span class="required">*</span>
+                  {{Form::number('advance_payment',null,['class'=>"form-control col-md-7 col-xs-12",'required'=>true, "id"=>"advance_payment", "placeholder"=>lang_trans('ph_enter').lang_trans('txt_advance_payment'),"min"=>0])}}
+              </div>
+              <div class="col-md-4 col-sm-4 col-xs-12">
+                <label class="control-label"> {{lang_trans('txt_mode_of_payment')}}</label><span class="required">*</span>
+                {{Form::select('payment_mode',config('constants.PAYMENT_MODES'),null,['class'=>"form-control col-md-7 col-xs-12",'required'=>true, "id"=>"payment_mode", "placeholder"=>"--Select--"])}}
+              </div>
+            </div>
+            <div class="ln_solid"></div>
+            <div class="col-md-12 col-sm-12 col-xs-12 text-right">
+              <button class="btn btn-success btn-submit-form" type="submit" disabled_>{{lang_trans('btn_submit')}}</button>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+    
     {{ Form::close() }}
   @endif
 </div>
@@ -449,22 +445,6 @@
   globalVar.page = 'room_reservation_add';
   globalVar.customerList = {!! json_encode($customer_list) !!};
 
-  $(document).ready(function () {
-      $('#time_slot').change(function () {
-          if ($(this).val() === 'Custom') {
-              $('#custom_time_picker').show(); // Show the time picker
-          } else {
-              $('#custom_time_picker').hide(); // Hide the time picker
-          }
-      });
-
-      $('.datetimepicker').flatpickr({
-          enableTime: true,            // Enable time selection
-          dateFormat: "Y-m-d H:i:s",   // Format for date and time
-          minDate: "today",            // Disable past dates
-          time_24hr: true              // Use 24-hour format
-      });
-  });
 </script> 
 <script type="text/javascript" src="{{URL::asset('public/js/page_js/page.js')}}"></script>       
 @endsection

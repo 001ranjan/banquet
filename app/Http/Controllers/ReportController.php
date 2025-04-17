@@ -273,5 +273,35 @@ class ReportController extends Controller
             return view('backend/laundry/list',$this->data);
         }
     }
-  
+    
+    public function deletePaymentHistory($id, Request $request)
+    {
+        // Find the payment record by ID
+        $payment = PaymentHistory::find($id);
+    
+        // Check if the payment record exists
+        if (!$payment) {
+            return redirect()->back()->with('error', 'Payment record not found.');
+        }
+    
+        // Get customer_id from the request
+        $customerId = $request->input('customer_id');
+    
+        // Find the related reservation record
+        $reservation = Reservation::where('customer_id', $customerId)->first();
+    
+        if ($reservation) {
+            // Subtract the payment amount from advance_payment
+            $reservation->advance_payment -= $payment->payment_amount;
+            $reservation->save(); // Save the updated reservation record
+        }
+    
+        // Delete the payment record
+        $payment->delete();
+    
+        // Redirect back with success message
+        return redirect()->back()->with('success', 'Payment record deleted and advance payment updated successfully.');
+    }
+    
+
 }

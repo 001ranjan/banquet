@@ -40,9 +40,11 @@
                             <br/>
                             <div>
                                 <h1>
-                                    <i class="fa fa-paw">
+                                    <!-- <i class="fa fa-paw">
                                     </i>
-                                    {{getSettings('hotel_name')}}
+                                    {{getSettings('hotel_name')}} -->
+                                    
+                                <img alt="" src="{{ asset('public/images/sistem-apps-logo.png') }}" style="height: 28px;">
                                 </h1>
                                 <p>
                                     ©{{date('Y')}} {{lang_trans('txt_rights_res')}}.

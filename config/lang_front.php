@@ -66,6 +66,10 @@ return [
             'en'=>'Food Items',
             'hi'=>'खाद्य - सामग्री',
         ],
+        'txt_items'=>[
+            'en'=>'Items',
+            'hi'=>'सामग्री',
+        ],
         'sidemenu_foodcat_add'=>[
             'en'=>'Add Food Category',
             'hi'=>'खाद्य श्रेणी जोड़ें',
@@ -87,6 +91,16 @@ return [
             'hi'=>'सभी खाद्य पदार्थ',
         ],
         
+        'sidemenu_menu_add'=>[
+            'en'=>'Add Menu',
+            'hi'=>'मेनू जोड़ें',
+        ],
+
+        'sidemenu_menu_all'=>[
+            'en'=>'All Menu',
+            'hi'=>'सभी मेनू',
+        ],
+
         'sidemenu_product_add'=>[
             'en'=>'Add Product',
             'hi'=>'उत्पाद जोड़ें',
@@ -250,6 +264,15 @@ return [
             'en'=>'List Food Items',
             'hi'=>'सूची खाद्य पदार्थ',
         ],
+        'heading_menu'=>[
+            'en'=>'Menu',
+            'hi'=>'मेनू',
+        ],
+        'heading_menu_list'=>[
+            'en'=>'List Menu',
+            'hi'=>'सूची मेनू',
+        ],
+
         'heading_expense_category'=>[
             'en'=>'Expense Category',
             'hi'=>'व्यय की श्रेणी',
@@ -779,6 +802,10 @@ return [
             'en'=>'Categories',
             'hi'=>'श्रेणियाँ',
         ],
+        'txt_menus'=>[
+            'en'=>'Menus',
+            'hi'=>'मेनू',
+        ],
         'txt_sub_category_name'=>[
             'en'=>'Sub Category Name',
             'hi'=>'उप श्रेणी का नाम',
@@ -798,6 +825,14 @@ return [
         'txt_item_name'=>[
             'en'=>'Item Name',
             'hi'=>'वस्तु का नाम',
+        ],
+        'txt_menu_name'=>[
+            'en'=>'menu Name',
+            'hi'=>'मेनू का नाम',
+        ],
+        'txt_no_of_food_items'=>[
+            'en'=>'No.of Food items',
+            'hi'=>'खाद्य पदार्थों की संख्या',
         ],
         'txt_price'=>[
             'en'=>'Price',

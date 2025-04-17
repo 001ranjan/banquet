@@ -38,6 +38,7 @@ use App\Models\SpecialFoodRemark;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\ExpenseCategoryRequest;
+use App\Models\Menu;
 
 class AdminController extends Controller
 {
@@ -365,7 +366,7 @@ class AdminController extends Controller
     /* ***** End Amenities Functions ***** */
 
     /* ***** Start RoomReservation Functions ***** */
-    public function roomReservation(Request $request, $step) {
+    public function roomReservation1(Request $request, $step) {
         $this->data['roomtypes_list'] = getRoomTypesList('custom');
         $this->data['customer_list'] = getCustomerList('get');
         $this->data['form_step'] = $step;
@@ -383,6 +384,53 @@ class AdminController extends Controller
         return redirect()->route('list-reservation')->with(['error' => config('constants.FLASH_INVALID_PARAMS')]);
     }
 
+    public function roomReservation(Request $request, $step) {
+        // dd($request);
+
+        $this->data['roomtypes_list'] = getRoomTypesList('custom');
+        $this->data['customer_list'] = getCustomerList('get');
+        // $this->data['form_step'] = $step;
+        // if(in_array($this->data['form_step'], [1, 2])){
+            // if($step == 1){
+                $inDate = dateConvert($request->check_in_date);
+                $outDate = dateConvert($request->check_out_date);
+                $this->data['roomlist'] = getRoomsWithPrice(['checkin_date' => $inDate, 'checkout_date' => $outDate]);
+                $this->data['booked_rooms'] = getBookedRooms(['checkin_date' => $inDate, 'checkout_date' => $outDate]);
+                $this->data['uri_params'] = $request->all();
+                $this->data['rooms'] = Room::whereStatus(1)->whereIsDeleted(0)->orderBy('room_no','ASC')->get();
+            // }
+            $this->data['customerData'] = json_encode($this->data, true);
+            // dd($this->data);
+            if(!$request->all()){
+                return view('backend/rooms/room_reservation_add_edit',$this->data);
+            }else{
+                return view('backend/rooms/room_reservation_vanue_add_edit',$this->data);
+            }
+
+        // }
+        // return redirect()->route('list-reservation')->with(['error' => config('constants.FLASH_INVALID_PARAMS')]);
+    }
+
+    // public function saveReservationVenue(Request $request) {
+    //     $this->data['vanue'] = $request->all();
+    //     $this->data['customer_list'] = getCustomerList('get');
+    //     return view('backend/rooms/room_reservation_vanue_add_edit',$this->data);
+    // }
+
+    public function roomReservationPayment(Request $request) {
+
+        $this->data['uri_params'] = $request->all();        
+        $this->data['customer'] = getCustomerInfo($this->data['uri_params']['selected_customer_id']);
+        
+        $this->data['customerData'] = json_encode($this->data, true);
+        
+        $this->data['data_row'] = Reservation::with('orders_items', 'persons', 'booked_rooms')
+        ->whereId($this->data['customer']['id'])
+        ->first();        
+
+        return view('backend/rooms/room_reservation_payment',$this->data);
+    }
+    
     public function editReservation(Request $request){
         $this->data['data_row'] = Reservation::with('orders_items','orders_info', 'booked_rooms')->whereId($request->id)->whereIsCheckout(0)->first();
         if($this->data['data_row']){
@@ -393,8 +441,10 @@ class AdminController extends Controller
     }
 
     public function saveReservation(Request $request) {
+        $pre_data = json_decode($request->customerData); 
+        $pre_customer_data = $pre_data->uri_params;
         // Log::debug(":: Booking Form Submit Data: ::" . print_r($request->all(), true));
-        if($request->id>0){
+        if($request->id>0){ // ----- check id
             if($this->core->checkWebPortal()==0){
                 return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
             } 
@@ -404,69 +454,72 @@ class AdminController extends Controller
             $success = config('constants.FLASH_REC_ADD_1');
             $error = config('constants.FLASH_REC_ADD_0');
         }
-        if(!$request->check_in_date || !$request->check_out_date || !$request->duration_of_stay){
+
+        if(!$pre_customer_data->check_in_date || !$pre_customer_data->check_out_date || !$pre_customer_data->duration_of_stay){
             return redirect()->back()->with(['error' => config('constants.FLASH_FILL_REQUIRED_FIELD')]);
         }
 
         $reservationData = [];
         $customerData = [];
 
-        if($request->guest_type=='existing'){
-            $customerId = $request->selected_customer_id;
+        if($pre_customer_data->guest_type=='existing'){
+            $customerId = $pre_customer_data->selected_customer_id;
             $custData   = Customer::whereId($customerId)->first();
-            $custName   = $custData->name;
+            $custName   = $custData->name ?? '';
         } else {
-            $custName = $request->name;
-            if(!$request->name || !$request->mobile || !$request->gender){
+            $custName = $pre_customer_data->name;
+            if(!$pre_customer_data->name || !$pre_customer_data->mobile || !$pre_customer_data->gender){
                 return redirect()->back()->with(['error' => config('constants.FLASH_FILL_REQUIRED_FIELD')]);
             }
             $customerData = [
-                "surname"     => $request->surname,
-                "name"        => $request->name,
-                "middle_name" => $request->middle_name,
-                "father_name" => $request->father_name,
-                "email"       => ($request->email) ? $request->email : null,
-                "mobile"      => $request->mobile,
-                "address"     => $request->address,
-                "nationality" => $request->nationality,
-                "country"     => $request->country,
-                "state"       => $request->state,
-                "city"        => $request->city,
-                "gender"      => $request->gender,
-                "age"         => $request->age,
-                "password"    => Hash::make($request->mobile),
+                "surname"     => $pre_customer_data->surname,
+                "name"        => $pre_customer_data->name,
+                "middle_name" => $pre_customer_data->middle_name,
+                "father_name" => $pre_customer_data->father_name,
+                "email"       => ($pre_customer_data->email) ? $pre_customer_data->email : null,
+                "mobile"      => $pre_customer_data->mobile,
+                "address"     => $pre_customer_data->address,
+                "nationality" => $pre_customer_data->nationality,
+                "country"     => $pre_customer_data->country,
+                "state"       => $pre_customer_data->state,
+                "city"        => $pre_customer_data->city,
+                "gender"      => $pre_customer_data->gender,
+                "age"         => $pre_customer_data->age,
+                "password"    => Hash::make($pre_customer_data->mobile),
             ]; 
             $customerId = Customer::insertGetId($customerData);
 
             // sync user and customer
             $this->core->syncUserAndCustomer();
         }
+
         $reservationData = [
             "customer_id"       => $customerId,
-            "guest_type"        => $request->guest_type,
-            "check_in"          => dateConvert($request->check_in_date, 'Y-m-d H:i:s'),
-            "check_out"         => dateConvert($request->check_out_date, 'Y-m-d H:i:s'),
-            "duration_of_stay"  => $request->duration_of_stay,
-            "event_type"        => $request->event_type,
-            "time_slot"         => $request->time_slot,
-            "custom_time"       => $request->custom_time,
-            "adult"             => $request->adult,
-            "kids"              => $request->kids,
-            "booked_by"         => $request->booked_by,
-            "vehicle_number"    => $request->vehicle_number,
-            "reason_visit_stay" => $request->reason_visit_stay,
+            "guest_type"        => $pre_customer_data->guest_type,
+            "check_in"          => dateConvert($pre_customer_data->check_in_date, 'Y-m-d H:i:s'),
+            "check_out"         => dateConvert($pre_customer_data->check_out_date, 'Y-m-d H:i:s'),
+            "duration_of_stay"  => $pre_customer_data->duration_of_stay,
+            "event_type"        => $pre_customer_data->event_type,
+            "time_slot"         => $request->time_slot, // -----
+            "custom_time"       => $request->custom_time, // -----
+            "adult"             => $pre_customer_data->adult,
+            "kids"              => $pre_customer_data->kids,
+            "booked_by"         => $pre_customer_data->booked_by,
+            "vehicle_number"    => $pre_customer_data->vehicle_number,
+            "reason_visit_stay" => $pre_customer_data->reason_visit_stay,
             "advance_payment"   => $request->advance_payment,
-            "idcard_type"       => $request->idcard_type,
-            "idcard_no"         => $request->idcard_no,
-            "referred_by"       => $request->referred_by,
-            "referred_by_name"  => $request->referred_by_name,
-            "remark_amount"     => $request->remark_amount,
-            "remark"            => $request->remark,
-            "company_name"      => $request->company_name,
-            "company_gst_num"   => $request->company_gst_num,
-            "room_plan"         => $request->room_plan,
+            "idcard_type"       => $pre_customer_data->idcard_type,
+            "idcard_no"         => $pre_customer_data->idcard_no,
+            "referred_by"       => $pre_customer_data->referred_by,
+            "referred_by_name"  => $pre_customer_data->referred_by_name,
+            "remark_amount"     => $pre_customer_data->remark_amount,
+            "remark"            => $pre_customer_data->remark,
+            "company_name"      => $pre_customer_data->company_name,
+            "company_gst_num"   => $pre_customer_data->company_gst_num,
+            "room_plan"         => $request->room_plan, // -----
             "payment_mode"      => $request->payment_mode ?? "",
         ];
+
         if(!$request->id){
             $reservationData["created_at_checkin"] = date('Y-m-d H:i:s');
         }
@@ -474,9 +527,8 @@ class AdminController extends Controller
         if($res){
             // add rooms
             if(!$request->id){
-                $this->addReservationRoom($res, $request);
+                $this->addReservationRoom($res, $pre_data); // check this function
             }
-
             // add ledger
             if($request->advance_payment){
                 $where = [
@@ -497,28 +549,32 @@ class AdminController extends Controller
                 $this->core->updateOrCreatePH($where, $paymentHistoryData);
             }
 
-            $mediaData = [
+            $mediaData = [ // media files
                 'tbl_id'      => $res->id,
                 'media_ids'   => $request->media_ids,
                 'files'       => ($request->hasFile('id_image')) ? $request->id_image : null,
                 'folder_path' => 'uploads/id_cards',
                 'type'        => 'id_cards',
-            ];           
+            ];   
+  
+
             $this->core->uploadAndUnlinkMediaFile($mediaData);
-        
-            if(isset($request->persons_info['name'])){
+            
+            $persons_info_data = $pre_customer_data->persons_info;
+            
+            if(isset($persons_info_data->name)){
                 $personsData = [];
-                $personReqData = $request->persons_info;
-                foreach($personReqData['name'] as $k => $val){
+                // $personReqData = $persons_info_data;
+                foreach($persons_info_data->name as $k => $val){
                     if($val!=''){
                         $personsData[] = [
                             'reservation_id' => $res->id,
                             'name'           => $val, 
-                            'gender'         => $personReqData['gender'][$k], 
-                            'age'            => $personReqData['age'][$k], 
-                            'address'        => $personReqData['address'][$k], 
-                            'idcard_type'    => $personReqData['idcard_type'][$k], 
-                            'idcard_no'      => $personReqData['idcard_no'][$k]
+                            'gender'         => $persons_info_data->gender[$k], 
+                            'age'            => $persons_info_data->age[$k], 
+                            'address'        => $persons_info_data->address[$k], 
+                            'idcard_type'    => $persons_info_data->idcard_type[$k], 
+                            'idcard_no'      => $persons_info_data->idcard_no[$k]
                         ];
                     }
                 }
@@ -526,9 +582,10 @@ class AdminController extends Controller
                     PersonList::insert($personsData);
                 }
             } 
+
             // send sms
-            if(!$request->id && $request->mobile){
-                $this->core->sendSms(1,$request->mobile,["name" => $custName]);
+            if(!$request->id && $pre_customer_data->mobile){
+                $this->core->sendSms(1,$pre_customer_data->mobile,["name" => $custName]);
             } 
             return redirect()->route('list-reservation')->with(['success' => $success]);
         }
@@ -577,7 +634,12 @@ class AdminController extends Controller
     }
 
     public function viewReservation(Request $request) {
-        $this->data['data_row'] = Reservation::with('orders_items','persons','booked_rooms')->whereId($request->id)->first();
+        
+            $this->data['data_row'] = Reservation::with('orders_items', 'persons', 'booked_rooms')
+            ->whereId($request->id)
+            ->first();        
+
+
         return view('backend/rooms/room_reservation_view',$this->data);
     }
 
@@ -741,7 +803,7 @@ class AdminController extends Controller
 
     public function listReservation() {
         $this->data['list'] = 'check_ins';
-        $this->data['datalist'] = Reservation::with('booked_rooms')->whereStatus(1)->whereIsDeleted(0)->whereIsCheckout(0)->orderBy('created_at','DESC')->get();
+        $this->data['datalist'] = Reservation::with('orders_items','booked_rooms')->whereStatus(1)->whereIsDeleted(0)->whereIsCheckout(0)->orderBy('created_at','DESC')->get();
         return view('backend/rooms/room_reservation_list',$this->data);
     }
 
@@ -786,7 +848,7 @@ class AdminController extends Controller
                         'tbl_id'   => $resData->id,
                         'tbl_name' => 'reservations',
                     ];
-                    $paymentHistoryData['payment_date']   = date('Y-m-d H:i:s');
+                    $paymentHistoryData['payment_date']   = $request->date_of_payment ?? date('Y-m-d H:i:s');
                     $paymentHistoryData['customer_id']    = $resData->customer_id;
                     $paymentHistoryData['user_id']        = getCustomerInfo($resData->customer_id)->user_id;
                     $paymentHistoryData['added_by']       = Auth::user()->id;
@@ -795,6 +857,7 @@ class AdminController extends Controller
                     $paymentHistoryData['credit_debit']   = 'Debit';
                     $paymentHistoryData['payment_of']     = 'cr';
                     $paymentHistoryData['transaction_id'] = getNextInvoiceNo('ph');
+                    $paymentHistoryData['reference']      = $request->reference ?? null;
                     $this->core->storePH($paymentHistoryData);
                 }
                 return redirect()->back()->with(['success' => config('constants.FLASH_REC_ADD_1')]);
@@ -838,7 +901,7 @@ class AdminController extends Controller
             'is_checkout' => 1,
         ];
         
-        $queryBookedRoom->update($oldRoomData);
+        $queryBookedRoom->delete($oldRoomData);
 
         //set new room data array
         $dateDiff = dateDiff(date('Y-m-d'), $bookedRoomData->check_in, 'daysWIthSymbol');
@@ -932,7 +995,7 @@ class AdminController extends Controller
     public function listFoodCategory()
     {
         $this->data['datalist'] = FoodCategory::with('parent')
-        ->where('status', 1)
+        // ->where('status', 1)
         ->where('is_deleted', 0)
         ->orderBy('parent_id', 'ASC') // Ensures Main Categories come first
         ->orderBy('name', 'ASC')     // Then orders by name
@@ -975,14 +1038,25 @@ class AdminController extends Controller
     }
     /* ***** End FoodCategory Functions ***** */
 
+    private function getMenuHierarchy() {
+        $menus = Menu::where('status', '1')
+            ->where('is_deleted', 0)
+            ->orderBy('menu_name', 'ASC')
+            ->get();
+        return $menus;
+    }
+    /* ***** End Menu Functions ***** */
+
     /* ***** Start FoodItems Functions ***** */
     public function addFoodItem() {
         $this->data['category_list'] = $this->getCategoryHierarchy();
+        $this->data['menu_list'] = $this->getMenuHierarchy();
         return view('backend/food_item_add_edit',$this->data);
     }
 
     public function editFoodItem(Request $request){
         $this->data['category_list'] = $this->getCategoryHierarchy();
+        $this->data['menu_list'] = $this->getMenuHierarchy();
         $this->data['data_row'] = FoodItem::whereId($request->id)->first();
         if(!$this->data['data_row']){
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
@@ -996,6 +1070,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
             'description' => 'nullable|string',
+            'menu_id' => 'required|array', // Ensures that menu_id is provided as an array
+            'menu_id.*' => 'exists:menus,id', // Validates that each menu_id is a valid menu    
         ]);
 
         if ($validator->fails()) {
@@ -1011,8 +1087,17 @@ class AdminController extends Controller
         }
     
         // Save or update the food item
-        $res = FoodItem::updateOrCreate(['id' => $request->id], $request->except(['_token']));
-    
+        // $res = FoodItem::updateOrCreate(['id' => $request->id], $request->except(['_token']));
+
+
+        // Convert menu_id array to JSON format
+        // $menuJson = json_encode($request->menu_id);
+
+        $res = FoodItem::updateOrCreate(
+            ['id' => $request->id],
+            array_merge($request->except(['_token', 'menu_id']), ['menu_ids' => $request->menu_id]) // Store menu_ids as JSON
+        );
+
         if ($res) {
             return redirect()->back()->with(['success' => $success]);
         }
@@ -1021,7 +1106,7 @@ class AdminController extends Controller
     }
 
     public function listFoodItem() {
-        $this->data['datalist'] = FoodItem::whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
+        $this->data['datalist'] = FoodItem::whereIsDeleted(0)->orderBy('name','ASC')->get();
         return view('backend/food_item_list',$this->data);
     }
 
@@ -1032,6 +1117,64 @@ class AdminController extends Controller
         return redirect()->back()->with(['error' => config('constants.FLASH_REC_DELETE_0')]);
     }
     /* ***** End FoodItems Functions ***** */
+
+
+    /* ***** Start Menu Functions ***** */
+    public function addMenu() {
+        return view('backend/menu_add_edit',$this->data);
+    }
+
+    public function editMenu(Request $request){
+        $this->data['data_row'] = Menu::whereId($request->id)->first();
+        if(!$this->data['data_row']){
+            return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
+        }
+        return view('backend/menu_add_edit',$this->data);
+    }
+
+    public function saveMenu(Request $request) {
+
+        $validator = Validator::make($request->all(), [
+            'menu_name'     => 'required|string|max:255',
+            'description'   => 'nullable|string',
+            'menu_price'    => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+    
+        if($request->id > 0) {
+            $success = config('constants.FLASH_REC_UPDATE_1');
+            $error = config('constants.FLASH_REC_UPDATE_0');
+        } else {
+            $success = config('constants.FLASH_REC_ADD_1');
+            $error = config('constants.FLASH_REC_ADD_0');
+        }
+    
+        // Save or update the food item
+        $res = Menu::updateOrCreate(['id' => $request->id], $request->except(['_token']));
+    
+        if ($res) {
+            return redirect()->back()->with(['success' => $success]);
+        }
+    
+        return redirect()->back()->with(['error' => $error]);
+    }
+
+    public function listMenu() {
+        $this->data['datalist'] = Menu::whereIsDeleted(0)->orderBy('menu_name','ASC')->get();
+        return view('backend/menu_list',$this->data);
+    }
+
+    public function deleteMenu(Request $request) {
+        if(Menu::whereId($request->id)->update(['is_deleted'=>1])){
+            return redirect()->back()->with(['success' => config('constants.FLASH_REC_DELETE_1')]);
+        }
+        return redirect()->back()->with(['error' => config('constants.FLASH_REC_DELETE_0')]);
+    }
+    /* ***** End Menu Functions ***** */
+    
 
     /* ***** Start ExpenseCategory Functions ***** */
     public function addExpenseCategory() {
@@ -1254,15 +1397,24 @@ class AdminController extends Controller
         return view('backend/orders_list',$this->data);
     }
 
-    public function foodOrder() {
+    public function foodOrder(Request $request) {
+
+        // $selectedMenuId = json_encode([$request->input('menu_id')]); 
+        $selectedMenuId = $request->input('menu_id');
+        
+        $data = FoodItem::whereJsonContains('menu_ids', $selectedMenuId)->get();
+          
         // Get categories and their food items
-        $this->data['categories'] = FoodCategory::with(['food_items' => function ($query) {
+        $this->data['categories'] = FoodCategory::with(['food_items' => function ($query) use ($selectedMenuId) {
             $query->where('status', 1);
+            
+            if ($selectedMenuId) {
+                $query->whereJsonContains('menu_ids', $selectedMenuId);
+            }    
         }])
         ->where('status', 1)
         ->where('is_deleted', 0)
         ->get();
-    
         // Group categories by their parent_id
         $groupedCategories = $this->data['categories']->groupBy('parent_id');
         
@@ -1288,7 +1440,34 @@ class AdminController extends Controller
 
         $this->data['category_tree'] = $this->getCategoryHierarchy(); //For Fetching Food Category Tree In Select
         
+        $this->data['menu_list'] = $this->getMenuHierarchy();
+
         return view('backend/food_order_page', $this->data);
+    }
+    
+    public function FoodOrderCancel(Request $request) {
+        $order = Order::with('orders_items')->find($request->order_id);
+
+        if ($order) {
+            $order->status = 1; // Set status to 4 (Cancelled)
+            $order->save();
+
+           
+            // Update related orders_items status
+            if ($order->orders_items->isNotEmpty()) { // Check if the collection is not empty
+                foreach ($order->orders_items as $item) {
+                    $item->status = 4; // Assuming 4 means cancelled
+                    $item->save();
+                }
+            }
+
+            return redirect()->route('list-reservation')->with(['success' => 'Orders Successfully Cancelled']);
+        }
+    
+        return response()->json([
+            'success' => false,
+            'message' => 'Order not found.'
+        ]);
     }
     
     public function foodOrderTable(Request $request) {
@@ -1341,8 +1520,22 @@ class AdminController extends Controller
 
         return response()->json(['html' => $html]);
     }
+    
+    public function foodOrderView(Request $request){
+        $request->session()->flash('food_order', $request->all());
+        $menu = Menu::where('id', $request->menu_id)->first();
+        
+        // Pass data properly to the view
+        return view('backend.food_order_view', compact('menu'));
+    }
 
     public function saveFoodOrder(Request $request){
+        // $order_exist = Order::where('reservation_id', $request->reservation_id)->exists();
+        $order_exist = Order::where('reservation_id', $request->reservation_id)->first();
+        // if ($order_exist) {
+        //     return redirect()->route('kitchen-invoice', ['order_id' => $order_exist->id, 'order_type' => 'room-order']);
+        // }
+
         // Log::debug(":: Food Order Form Submit Data: ::" . print_r($request->all(), true));
         $insertRec = true;
         $insertRecOrderHistorty = true;
@@ -1356,45 +1549,131 @@ class AdminController extends Controller
         if(count($itemsArr)>0){
             $orderData = [];
             $gstPerc = $cgstPerc = $gstAmount = $cgstAmount = 0;
-            if($request->food_gst_apply==1){
+            
+            if($request->gst_apply==1){
                 $gstPerc    = $request->gst_perc;
                 $cgstPerc   = $request->cgst_perc;
-                $gstAmount  = $request->gst_amount;
-                $cgstAmount = $request->cgst_amount;
+                $gstAmount  = $request->order_amount_gst;
+                $cgstAmount = $request->order_amount_cgst;
             }
             $orderInfo = [
                 'reservation_id' => $request->reservation_id,
                 'invoice_num'    => ($request->food_invoice_apply=="on") ? getNextInvoiceNo('orders') : null,
                 'invoice_date'   => $invoiceDate,
                 'table_num'      => $request->table_num,
-                'gst_apply'      => $request->food_gst_apply,
+                'gst_apply'      => $request->gst_apply,
                 'gst_perc'       => $gstPerc,
                 'gst_amount'     => $gstAmount,
                 'cgst_perc'      => $cgstPerc,
                 'cgst_amount'    => $cgstAmount,
-                'discount'       => $request->discount_amount,
-                'total_amount'   => $request->final_amount,
+                'discount'       => $request->discount_order_amount,
+                'total_amount'   => $request->price_par_plate,
                 'name'           => $request->name,
                 'email'          => $request->email,
                 'mobile'         => $request->mobile,
                 'address'        => $request->address,
                 'gender'         => $request->gender,
-                'num_of_person'  => $request->num_of_person,
+                'num_of_person'  => $request->no_of_guests,
                 'waiter_name'    => $request->waiter_name,
                 'payment_mode'   => $request->payment_mode,
+                'status'         => 0,
             ];
-            if($request->page=='ff_order'){
+            if($order_exist){
                 $orderInfo['original_date'] = date('Y-m-d H:i:s');
-                $orderRes = Order::where('id',$request->order_id)->update($orderInfo);
+             
+                $orderRes = Order::where('id',$order_exist->id)->update($orderInfo);
+
+                OrderItem::where('order_id', $order_exist->id)->delete();
+                    
                 if($orderRes){
-                    OrderHistory::where('order_id',$request->order_id)->update(['is_book'=>0]);
+                    /////////////////////////////////////   old-start
+                    // Process Special Requirements
+                    if (!empty($request->specialRequirement)) {
+                        $specialRequirements = $request->specialRequirement;
+                        
+                        // Combine the fields into rows and filter out empty ones
+                        $specialItems = [];
+                        $jsonDataArray = []; // This will store multiple JSON objects
+                        if (!empty($specialRequirements['name'])) {
+                            foreach ($specialRequirements['name'] as $index => $name) {
+                                if (
+                                    !empty($name) &&
+                                    !empty($specialRequirements['category_id'][$index]) &&
+                                    !empty($specialRequirements['type'][$index])
+                                ) {
+                                    // Prepare JSON data for each item
+                                    $jsonDataArray[] = [
+                                        'category_id'   => $specialRequirements['category_id'][$index],
+                                        'category_name' => FoodCategory::where('id', $specialRequirements['category_id'][$index])->value('name'),
+                                        'item_name'     => $name,
+                                        'type'          => $specialRequirements['type'][$index],
+                                    ];
+                                }
+                            }
+                        }
+                        // Only add the entry if there's at least one valid special requirement
+                        if (!empty($jsonDataArray)) {
+                            $specialItems[] = [
+                                'order_id'         => $order_exist->id,
+                                'order_history_id' => $orderHistoryResId,
+                                'reservation_id'   => $orderInfo['reservation_id'],
+                                'item_name'        => 'special requirements',
+                                'item_price'       => $specialRequirements['price'],
+                                'item_qty'         => $request->no_of_guests,
+                                'json_data'        => json_encode($jsonDataArray), // Store all items in one JSON field
+                                'remark'           => $request->remarks,
+                                'status'           => 3,
+                                'created_at'       => now(),
+                                'updated_at'       => now(),
+                            ];
+                        }
+                        // Insert the filtered records into the database
+                        if (!empty($specialItems)) {      
+                           
+                            // $orderItemRes = OrderItem::where('order_id',$order_exist->id)->where('item_name','special requirements')->update($specialItems);
+                            OrderItem::insert($specialItems); // Bulk insert all special items
+                        }
+                    }
+                    
+                    $jsonMenuDataArray = []; // This will store multiple JSON objects
+                    foreach ($itemsArr as $k => $val) {
+                        $exp = explode('~', $request->items[$k]);
+
+                        $jsonMenuDataArray[] = [
+                            'category_id'   => $exp[0],
+                            'category_name' => $exp[1],
+                            'item_name'     => $exp[2],
+                            'item_id'       => $request->no_of_guests,
+                            'type'          => FoodItem::where('id', $k)->value('type'),
+                        ];
+                    }
+                    // Store all JSON data as a single JSON array
+                    $orderArr[] = [
+                        'order_id'         => $order_exist->id, 
+                        'order_history_id' => $orderHistoryResId, 
+                        'reservation_id'   => $orderInfo['reservation_id'],
+                        'item_name'        => $request->menu_name,
+                        'item_price'       => $request->menu_price,
+                        'item_qty'         => $request->no_of_guests, // Count of items instead of individual qty
+                        'json_data'        => json_encode($jsonMenuDataArray), // Store all items in one JSON field
+                        'remark'           => $request->remarks,
+                        'status'           => 3,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ];
+
+                    // Insert the order food items data into the database
+                    $res = OrderItem::insert($orderArr);
+                    
+                    ////////////////////////////////////////////// old-end
+                    OrderHistory::where('order_id',$order_exist->id)->update(['is_book'=>0]);
 
                     //send sms
                     if($request->mobile){
                         $this->core->sendSms(3,$request->mobile,['name' => $request->name]);
                     } 
-
-                    return redirect()->route('order-invoice-final',[$request->order_id])->with(['success' => 'Orders Successfully submitted']);
+                    return redirect()->route('kitchen-invoice',['order_id' => $order_exist->id,'order_type'=>'room-order'])->with(['success' => 'Orders Successfully submitted']);
+                    // return redirect()->route('order-invoice-final',[$request->order_id])->with(['success' => 'Orders Successfully submitted']);
                 } else {
                     return redirect()->back()->with(['error' => 'Order placed failed.Try again']);
                 }
@@ -1409,7 +1688,6 @@ class AdminController extends Controller
                         $orderResId = $isTableBooked->order_id;
                     }
                 }
-                
                 if($insertRec){
                     $orderResId = Order::insertGetId($orderInfo);
                 }
@@ -1428,113 +1706,79 @@ class AdminController extends Controller
                 $custID = Reservation::where('id', $reservationID)->value('customer_id');
 
                 // Process Special Requirements
-                if (!empty($request->special_requirement)) {
-                    $specialRequirements = $request->special_requirement;
-                
+                if (!empty($request->specialRequirement)) {
+                    $specialRequirements = $request->specialRequirement;
+                    
                     // Combine the fields into rows and filter out empty ones
                     $specialItems = [];
-                    foreach ($specialRequirements['name'] as $index => $name) {
-                        if (
-                            !empty($name) &&
-                            !empty($specialRequirements['category_id'][$index]) &&
-                            !empty($specialRequirements['type'][$index]) &&
-                            !empty($specialRequirements['price'][$index])
-                        ) {
-                            // Prepare JSON data for the item
-                            $jsonData = [
-                                'category_id'   => $specialRequirements['category_id'][$index],
-                                'category_name' => FoodCategory::where('id', $specialRequirements['category_id'][$index])->value('name'),
-                                'item_name'     => $name,
-                                'type'          => $specialRequirements['type'][$index],
-                            ];
-                
-                            // Add the item to the array for insertion
-                            $specialItems[] = [
-                                'order_id'         => $lastOrderId,
-                                'order_history_id' => $orderHistoryResId,
-                                'reservation_id'   => $reservationID,
-                                'item_name'        => $name,
-                                'item_price'       => $specialRequirements['price'][$index],
-                                'item_qty'         => 1,
-                                'json_data'        => json_encode($jsonData),
-                                'status'           => 3,
-                                'created_at'       => now(),
-                                'updated_at'       => now(),
-                            ];
+                    $jsonDataArray = []; // This will store multiple JSON objects
+                    if (!empty($specialRequirements['name'])) {
+                        foreach ($specialRequirements['name'] as $index => $name) {
+                            if (
+                                !empty($name) &&
+                                !empty($specialRequirements['category_id'][$index]) &&
+                                !empty($specialRequirements['type'][$index])
+                            ) {
+                                // Prepare JSON data for each item
+                                $jsonDataArray[] = [
+                                    'category_id'   => $specialRequirements['category_id'][$index],
+                                    'category_name' => FoodCategory::where('id', $specialRequirements['category_id'][$index])->value('name'),
+                                    'item_name'     => $name,
+                                    'type'          => $specialRequirements['type'][$index],
+                                ];
+                            }
                         }
                     }
-                
+                    // Only add the entry if there's at least one valid special requirement
+                    if (!empty($jsonDataArray)) {
+                        $specialItems[] = [
+                            'order_id'         => $lastOrderId,
+                            'order_history_id' => $orderHistoryResId,
+                            'reservation_id'   => $reservationID,
+                            'item_name'        => 'special requirements',
+                            'item_price'       => $specialRequirements['price'],
+                            'item_qty'         => $request->no_of_guests,
+                            'json_data'        => json_encode($jsonDataArray), // Store all items in one JSON field
+                            'remark'           => $request->remarks,
+                            'status'           => 3,
+                            'created_at'       => now(),
+                            'updated_at'       => now(),
+                        ];
+                    }
                     // Insert the filtered records into the database
                     if (!empty($specialItems)) {
                         OrderItem::insert($specialItems); // Bulk insert all special items
                     }
                 }
-
-                // if (!empty($request->special_requirement)) {
-                //     $specialRequirements = $request->special_requirement;
                 
-                //     // Combine the fields into rows and filter out empty ones
-                //     $specialItems = [];
-                //     foreach ($specialRequirements['name'] as $index => $name) {
-                //         if (!empty($name) && !empty($specialRequirements['category_id'][$index]) && !empty($specialRequirements['type'][$index]) && !empty($specialRequirements['price'][$index])) {
-                //             $specialItems[] = [
-                //                 'name'         => $name,
-                //                 'category_id'  => $specialRequirements['category_id'][$index],
-                //                 'type'         => $specialRequirements['type'][$index],
-                //                 'price'        => $specialRequirements['price'][$index],
-                //                 'customer_id'  => $custID,
-                //                 'created_at'   => now(),
-                //                 'updated_at'   => now(),
-                //             ];
-                //         }
-                //     }
                 
-                //     // Insert the filtered records into the database
-                //     if (!empty($specialItems)) {
-                //         SpecialFoodItem::insert($specialItems); // Bulk insert all special items
-                //         // After inserting, fetch the inserted special food items
-                //         $specialFoodItems = SpecialFoodItem::whereIn('name', $specialRequirements['name'])->get(); // Or use another suitable condition
-                //     }
-                // }
-
-                // Process Special Remarks (Inserting the single remark for all special food items)
-                // if (!empty($request->remarks) && isset($specialFoodItems) && $specialFoodItems->isNotEmpty()) {
-                //     foreach ($specialFoodItems as $specialFoodItem) {
-                //         // Insert the remark for each special food item
-                //         $specialFoodRemarksData = [
-                //             'special_food_items_id' => $specialFoodItem->id, // Associate remark with each special food item
-                //             'customer_id' => $custID,
-                //             'remarks' => $request->remarks,
-                //         ];
-
-                //         SpecialFoodRemark::create($specialFoodRemarksData); // Insert the remark for each item
-                //     }
-                // }
-
-                foreach($itemsArr as $k => $val){
-                    // Log::debug(":: Items Data:- ::" . print_r($request->items[$k], true));
+                $jsonMenuDataArray = []; // This will store multiple JSON objects
+                foreach ($itemsArr as $k => $val) {
                     $exp = explode('~', $request->items[$k]);
-                    // Log::debug(":: Food Items After Filtering:- ::" . print_r($exp, true));
-                    $jsonData = [
+
+                    $jsonMenuDataArray[] = [
                         'category_id'   => $exp[0],
                         'category_name' => $exp[1],
                         'item_name'     => $exp[2],
-                        'item_id'       => $k,
+                        'item_id'       => $request->no_of_guests,
                         'type'          => FoodItem::where('id', $k)->value('type'),
                     ];
-                    $orderArr[] = [
-                        'order_id'         => $lastOrderId, 
-                        'order_history_id' => $orderHistoryResId, 
-                        'reservation_id'   => $reservationID, 
-                        'item_name'        => $exp[2],
-                        'item_price'       => $exp[3],
-                        'item_qty'         => $val, 
-                        'json_data'        => json_encode($jsonData), 
-                        'status'           => 3,
-                        'created_at'       => now(),
-                        'updated_at'       => now(),
-                    ];
                 }
+
+                // Store all JSON data as a single JSON array
+                $orderArr[] = [
+                    'order_id'         => $lastOrderId, 
+                    'order_history_id' => $orderHistoryResId, 
+                    'reservation_id'   => $reservationID, 
+                    'item_name'        => $request->menu_name,
+                    'item_price'       => $request->menu_price,
+                    'item_qty'         => $request->no_of_guests, // Count of items instead of individual qty
+                    'json_data'        => json_encode($jsonMenuDataArray), // Store all items in one JSON field
+                    'remark'           => $request->remarks,
+                    'status'           => 3,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ];
 
                 // Insert the order food items data into the database
                 $res = OrderItem::insert($orderArr);
@@ -1580,6 +1824,8 @@ class AdminController extends Controller
             $this->data['data_row'] = OrderHistory::with('order')->whereId($id)->first();
         }
          $this->data['type'] = $type;
+         $settings = getSettings();
+
         return view('backend/kitchen_invoice',$this->data);
     }
 
@@ -1817,29 +2063,72 @@ class AdminController extends Controller
         return $this->data;
     }
 
-    function addReservationRoom($reservationData, $request){
+    function addReservationRoom($reservationData, $pre_data){
+        $customersData = $pre_data->uri_params;
         $roomData = [];
-        if($request->room_num && count($request->room_num) > 0){
-            foreach($request->room_num as $val){
+        $roomArray = explode(", ", $customersData->room_num);
+
+        if($roomArray && count($roomArray) > 0){
+            foreach($roomArray as $val){
                 $exp = explode('~', $val);
                 $roomTypeDetails = getRoomTypeById($exp[0]);
-
+                
                 // get datewise price list
-                $priceInfo = getRoomsWithPrice([ 'checkin_date' => $request->check_in_date, 'checkout_date' => $request->check_out_date, 'room_type_ids' => [$exp[0]] ]);
+                $priceInfo = getRoomsWithPrice([ 'checkin_date' => $customersData->check_in_date, 'checkout_date' => $customersData->check_out_date, 'room_type_ids' => [$exp[0]] ]);
                 $roomData[] = [
                     'reservation_id'  => $reservationData->id,
                     'room_type_id'    => $exp[0],
                     'room_id'         => $exp[1],
                     'room_price'      => $roomTypeDetails->base_price,
                     'room_price'      => $roomTypeDetails->base_price,
-                    'check_in'        => dateConvert($request->check_in_date, 'Y-m-d H:i:s'),
-                    'check_out'       => dateConvert($request->check_out_date, 'Y-m-d H:i:s'),
+                    'check_in'        => dateConvert($customersData->check_in_date, 'Y-m-d H:i:s'),
+                    'check_out'       => dateConvert($customersData->check_out_date, 'Y-m-d H:i:s'),
                     'date_wise_price' => json_encode($priceInfo[$exp[0]]['dates_with_price'])
                 ];
             }
             BookedRoom::insert($roomData);
         }
     }
+
+    function addReservationRoom1($reservationData, $pre_data)
+    {
+        $customersData = $pre_data->uri_params;
+        
+        // Ensure room_num is properly formatted as an array
+        $roomArray = is_array($customersData->room_num) ? $customersData->room_num : explode(", ", $customersData->room_num);
+        
+        if (!empty($roomArray)) {
+            $roomData = [];
+
+            foreach ($roomArray as $val) {
+                [$roomTypeId, $roomId] = explode('~', $val);
+                $roomTypeDetails = getRoomTypeById($roomTypeId);
+
+                // Fetch datewise price list
+                $priceInfo = getRoomsWithPrice([
+                    'checkin_date'   => $customersData->check_in_date,
+                    'checkout_date'  => $customersData->check_out_date,
+                    'room_type_ids'  => [$roomTypeId]
+                ]);
+
+                $roomData[] = [
+                    'reservation_id'  => $reservationData->id,
+                    'room_type_id'    => $roomTypeId,
+                    'room_id'         => $roomId,
+                    'room_price'      => $roomTypeDetails->base_price,
+                    'check_in'        => dateConvert($customersData->check_in_date, 'Y-m-d H:i:s'),
+                    'check_out'       => dateConvert($customersData->check_out_date, 'Y-m-d H:i:s'),
+                    'date_wise_price' => json_encode($priceInfo[$roomTypeId]['dates_with_price'] ?? [])
+                ];
+            }
+
+            // Batch insert to optimize database interaction
+            if (!empty($roomData)) {
+                BookedRoom::insert($roomData);
+            }
+        }
+    }
+
 
     function updateReservationRoom($reservationData, $request){
         $roomData = [];

@@ -3,6 +3,7 @@
   <link rel="stylesheet" href="{{URL::asset('public/assets/fullcalendar/main.css')}}">
   <script type="text/javascript" src="{{URL::asset('public/assets/fullcalendar/main.js')}}"></script>    
   <script type="text/javascript" src="{{URL::asset('public/assets/fullcalendar/locales-all.min.js')}}"></script>    
+  
   <div class="">
     @section('rightColContent')
         <div class="row top_tiles">
@@ -10,10 +11,12 @@
             <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats">
                     <div class="icon">
-                        <i class="fa fa-caret-square-o-right"></i>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 60 60" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                      </svg>
                     </div>
                     <div class="count">{{$counts[0]->today_check_ins}}</div>
-                    <h3><a href="{{route('list-reservation')}}">{{lang_trans('txt_today_checkin')}}</a></h3>
+                    <h4>&nbsp;<a href="{{route('list-reservation')}}">{{lang_trans('txt_today_checkin')}}</a></h4>
                     <p>&nbsp;</p>
                 </div>
             </div>
@@ -25,7 +28,7 @@
                         <i class="fa fa-comments-o"></i>
                     </div>
                     <div class="count">{{$counts[0]->today_check_outs}}</div>
-                    <h3><a href="{{route('list-check-outs')}}">{{lang_trans('txt_today_checkout')}}</a></h3>
+                    <h4>&nbsp;<a href="{{route('list-check-outs')}}">{{lang_trans('txt_today_checkout')}}</a></h4>
                     <p>&nbsp;</p>
                 </div>
             </div>
@@ -34,10 +37,12 @@
             <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats">
                     <div class="icon">
-                        <i class="fa fa-comments-o"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 60 60" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                        </svg>
                     </div>
                     <div class="count">0</div>
-                    <h3><a href="javascript:void(0);">{{ lang_trans("txt_today_lead") }}</a></h3>
+                    <h4>&nbsp;<a href="javascript:void(0);">{{ lang_trans("txt_today_lead") }}</a></h4>
                     <p>&nbsp;</p>
                 </div>
             </div>
@@ -46,18 +51,20 @@
             <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats">
                     <div class="icon">
-                        <i class="fa fa-sort-amount-desc"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 60 60" stroke-width="1.5" stroke="currentColor" class="size-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+                    </svg>
                     </div>
                     <div class="count">{{$counts[0]->today_orders}}</div>
-                    <h3><a href="{{route('orders-list')}}">{{lang_trans('txt_today_orders')}}</a></h3>
+                    <h4>&nbsp;<a href="{{route('orders-list')}}">{{lang_trans('txt_today_orders')}}</a></h4>
                     <p>&nbsp;</p>
                 </div>
             </div>
           @endif
           <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
               <div class="tile-stats">
-                <div class="count" id="current-date">{{ date("d F Y") }}</div>
-                <h3><a href="javascript:void(0);" id="current-time"></a></h3>
+                <h3><a href="javascript:void(0);" class="count" id="current-time"></a></h3>
+                <h4><a href="#">&nbsp;&nbsp;{{date("d F Y")}}</a></h4>
                 <p>&nbsp;</p>
               </div>
           </div>
@@ -78,7 +85,7 @@
     <div class="row">
         <div class="col-md-6 col-sm-6 col-xs-12">
           @if(isPermission('dashboard-latest-food-orders'))
-            <div class="row">
+            <!-- <div class="row">
                 <div class="col-md-12 col-sm-12 col-xs-12">
                     <div class="x_panel">
                         <div class="x_title">
@@ -185,7 +192,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
           @endif 
           @if(isPermission('dashboard-room-list')) 
             <div class="row">
@@ -304,7 +311,7 @@
       const amPm = hours >= 12 ? 'PM' : 'AM';
 
       // Format time with leading zeros
-      const formattedTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${amPm}`;
+      const formattedTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')} ${amPm}`;
       document.getElementById('current-time').textContent = formattedTime;
     }
 

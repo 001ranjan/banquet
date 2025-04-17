@@ -6,8 +6,7 @@
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>{{getSettings('site_page_title')}}</title>
-      <link rel="icon" href="{{checkFile(getSettings('site_favicon'),'uploads/favicon/','default_favicon.png')}}" sizes="16x16" type="image/png">
-
+      <link rel="icon" href="{{ asset('public/images/sistem-hotel-logo.png') }}" sizes="16x16" type="image/png">
       <link href="{{URL::asset('public/assets/datatables.net-bs/css/dataTables.bootstrap.min.css')}}" rel="stylesheet">
       <link href="{{URL::asset('public/assets/sweetalert2-7.0.0/sweetalert2.min.css')}}" rel="stylesheet">
       <link href="{{URL::asset('public/assets/select2/dist/css/select2.min.css')}}" rel="stylesheet">
@@ -58,16 +57,29 @@
                     <div class="left_col scroll-view">
                         <div class="navbar nav_title">
                             <a class="site_title" href="#">
-                                <i class="fa fa-paw">
-                                </i>
+                                <!-- <i class="fa fa-paw">
+                                </i> 
+                            
                                 <span>
                                     {{getSettings('site_page_title')}}
                                 </span>
+                                -->
+                                <img alt="" src="{{ asset('public/images/sistem-hotel-logo.png') }}" 
+                                    style=" 
+                                            width: 36px;
+                                            height: 36px;
+                                            margin: 6px;
+                                            ">
+                                <span>
+                                    <img alt="" src="{{ asset('public/images/sistem-apps-logo.png') }}" style="height: 20px;">
+                                </span>
+
+
                             </a>
                         </div>
                         <div class="clearfix">
                         </div>
-                        <div class="profile clearfix">
+                        <!-- <div class="profile clearfix">
                             <div class="profile_pic">
                                 <img alt="{{Auth::user()->name}}" class="img-circle profile_img" src="{{url('public/images/user_img.png')}}">
                                 </img>
@@ -83,7 +95,7 @@
                             <div class="clearfix">
                             </div>
                         </div>
-                        <br/>
+                        <br/> -->
                         @include('layouts.sidebar_backend')
                     </div>
                 </div>

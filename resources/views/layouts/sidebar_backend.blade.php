@@ -78,16 +78,21 @@ $permissionsArr = getRoutePermission();
         </li>
       @endif
       
-      @if($permissionsArr['add-food-category'] || $permissionsArr['list-food-category'] || $permissionsArr['add-food-item'] || $permissionsArr['list-food-item'])
+
+      @if($permissionsArr['add-food-category'] || $permissionsArr['list-food-category'] || $permissionsArr['add-food-item'] || $permissionsArr['list-food-item'] || $permissionsArr['add-menu'] || $permissionsArr['list-menu'])
         <li><a><i class="fa fa-cutlery"></i>{{lang_trans('sidemenu_fooditems')}}<span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             @if($permissionsArr['add-food-category']) <li><a href="{{route('add-food-category')}}">{{lang_trans('sidemenu_foodcat_add')}} </a></li> @endif
             @if($permissionsArr['list-food-category']) <li><a href="{{route('list-food-category')}}">{{lang_trans('sidemenu_foodcat_all')}} </a></li> @endif
+            
+            @if($permissionsArr['add-menu']) <li><a href="{{route('add-menu')}}">{{lang_trans('sidemenu_menu_add')}} </a></li> @endif
+            @if($permissionsArr['list-menu']) <li><a href="{{route('list-menu')}}">{{lang_trans('sidemenu_menu_all')}} </a></li> @endif
             @if($permissionsArr['add-food-item']) <li><a href="{{route('add-food-item')}}">{{lang_trans('sidemenu_fooditem_add')}} </a></li> @endif
             @if($permissionsArr['list-food-item']) <li><a href="{{route('list-food-item')}}">{{lang_trans('sidemenu_fooditem_all')}} </a></li> @endif
           </ul>
         </li>
       @endif
+
 
       @if($permissionsArr['add-product'] || $permissionsArr['list-product'] || $permissionsArr['io-stock'] || $permissionsArr['stock-history'])
         <li><a><i class="fa fa-cart-plus"></i>{{lang_trans('sidemenu_stocks')}}<span class="fa fa-chevron-down"></span></a>

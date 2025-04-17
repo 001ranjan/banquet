@@ -125,7 +125,9 @@ Route::prefix('admin')->group(function () {
 
             Route::get('quick-check-in/{step}', 'roomReservation')->name('quick-check-in');
             Route::get('check-in/{step}', 'roomReservation')->name('room-reservation');
+            Route::post('save-reservation-venue', 'saveReservationVenue')->name('save-reservation-venue');
             Route::post('save-reservation', 'saveReservation')->name('save-reservation');
+            Route::post('room-reservation-payment', 'roomReservationPayment')->name('room-reservation-payment');
             Route::get('check-out/{id}', 'checkOut')->name('check-out-room');
             Route::post('check-out', 'saveCheckOutData')->name('check-out');
             Route::get('list-check-ins', 'listReservation')->name('list-reservation');
@@ -154,6 +156,14 @@ Route::prefix('admin')->group(function () {
             Route::get('list-food-item', 'listFoodItem')->name('list-food-item');
             Route::get('delete-food-item/{id}', 'deleteFoodItem')->name('delete-food-item');
 
+
+            Route::get('add-menu', 'addMenu')->name('add-menu');
+            Route::get('edit-menu/{id}', 'editMenu')->name('edit-menu');
+            Route::post('save-menu', 'saveMenu')->name('save-menu');
+            Route::get('list-menu', 'listMenu')->name('list-menu');
+            Route::get('delete-menu/{id}', 'deleteMenu')->name('delete-menu');
+
+            
             Route::get('add-expense-category', 'addExpenseCategory')->name('add-expense-category');
             Route::get('edit-expense-category/{id}', 'editExpenseCategory')->name('edit-expense-category');
             Route::post('save-expense-category', 'saveExpenseCategory')->name('save-expense-category');
@@ -173,6 +183,9 @@ Route::prefix('admin')->group(function () {
             Route::get('food-order-update/{order_id}', 'FoodOrderUpdate')->name('food-order-update');
             // Fetch food Orders
             Route::post('fetch-food-orders', 'fetchFoodOrders')->name('fetch-food-orders');
+            Route::post('food-order-view', 'foodOrderView')->name('food-order-view');
+            Route::get('cancel-food-order/{order_id}', 'FoodOrderCancel')->name('food-order-cancel');
+
 
             Route::get('orders-list', 'listOrders')->name('orders-list');
             Route::get('order-invoice/{id}', 'orderInvoice')->name('order-invoice');
@@ -301,6 +314,7 @@ Route::prefix('admin')->group(function () {
 
             Route::post('/search-payment-history', 'searchPaymentHistory')->name('search-payment-history');
             Route::post('/export-payment-history', 'searchPaymentHistory')->name('export-payment-history');
+            Route::delete('/delete-payment-history/{id}/{customer_id}', 'deletePaymentHistory')->name('delete-payment-history');
 
             Route::post('/search-laundry-order', 'searchLaundryOrder')->name('search-laundry-order');
             Route::post('/export-laundry-order', 'exportLaundryOrder')->name('export-laundry-order');

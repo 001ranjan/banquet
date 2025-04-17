@@ -42,7 +42,28 @@
                                 <div class="error text-danger">{{ $errors->first('category_id') }}</div>
                             @endif
                         </div>
+                    </div>       
+
+                    {{-- Menu Multi-Select Dropdown --}}
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="menu_id">
+                            {{ lang_trans('txt_menus') }} <span class="required">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <select name="menu_id[]" id="menu_id" class="form-control js-example-basic-multiple" multiple>
+                                @foreach ($menu_list as $menu)
+                                    <option value="{{ $menu->id }}" 
+                                        @if (isset($data_row) && in_array($menu->id, $data_row->menu_ids ?? '[]')) selected @endif>
+                                        {{ $menu->menu_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if ($errors->has('menu_id'))
+                                <div class="error text-danger">{{ $errors->first('menu_id') }}</div>
+                            @endif
+                        </div>
                     </div>
+
 
                     {{-- Item Name --}}
                     <div class="form-group">
@@ -92,7 +113,7 @@
                     <div class="form-group">
                         <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ lang_trans('txt_status') }}</label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
-                            {{ Form::select('status', config('constants.LIST_STATUS'), 1, ['class' => 'form-control']) }}
+                            {{ Form::select('status', config('constants.LIST_STATUS'), 1, ['id' => "status",'class' => 'form-control']) }}
                             @if ($errors->has('status'))
                                 <div class="error text-danger">{{ $errors->first('status') }}</div>
                             @endif
@@ -117,4 +138,10 @@
         </div>
     </div>
 </div>
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
 @endsection

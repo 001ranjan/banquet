@@ -14,7 +14,7 @@
               <div class="clearfix"></div>
           </div>
           <div class="x_content">
-              {{ Form::model($search_data,array('url'=>route('search-checkouts'),'id'=>"search-checkouts", 'class'=>"form-horizontal form-label-left")) }}
+              {{ Form::model($search_data,array('url'=>route('search-checkouts'),'id'=>"search-checkouts", 'class'=>"form-horizontal form-label-left",'files' => true)) }}
                 <div class="form-group col-sm-3">
                   <label class="control-label">{{lang_trans('txt_guest')}}</label>
                   {{Form::text('customer_id',null,['class'=>"form-", "id"=>"customers", "placeholder"=>lang_trans('ph_select')])}}
@@ -95,6 +95,7 @@
                             @endif --}}
                           </td>
                           <td>
+                            @if($val->orders_items->count()>0)
                               <button 
                                   class="btn btn-xs btn-primary btn-view-food-items" 
                                   data-reservation-id="{{ $val->id }}" 
@@ -102,10 +103,12 @@
                                   data-target="#booked_food_{{$val->id}}">
                                   {{ lang_trans('btn_view') }}
                               </button>
-                              @include('backend/model/booked_food_modal',['val' => $val])
+                              @include('backend/model/booked_food_modal_list',['val' => $val])
+                            @endif
                           </td>
                           <td>{{ $val->duration_of_stay ?? "" }} {{ "days" }}</td>
-                          <td>{{dateConvert($val->check_in,'Y-m-d H:i:s')}}</td>
+                          <td>{{ dateConvert($val->check_in, 'Y-m-d H:i:s') }}</td>
+
                           <td>{{dateConvert($val->check_out,'Y-m-d H:i:s')}}</td>
                           <td>{{getCurrencySymbol()}} {{numberFormat($calc['finalRoomAmount']+$calc['finalOrderAmount']+$calc['additionalAmount'])}}</td>
                           <td>
@@ -121,9 +124,25 @@
                               <a class="btn btn-xs btn-info" href="{{route('advance-slip',[base64_encode($val->id)])}}" target="_blank">{{lang_trans('btn_advance_slip')}}</a>
                             @endisPermission
 
-                            @isPermission('food-order')
+                            <!-- @isPermission('food-order')
                               <a class="btn btn-xs btn-warning" href="{{route('food-order',[$val->id])}}">{{lang_trans('btn_food_order')}}</a>
                             @endisPermission
+                             -->
+                            @isPermission('food-order')
+                              @php
+                                  $order = \App\Models\Order::where('reservation_id', $val->id)->where('status', '=', 0)->first();
+                              @endphp
+
+                              @if ($order)
+                                  <a class="btn btn-xs btn-warning" href="{{ route('kitchen-invoice', ['order_id' => $order->id, 'order_type' => 'room-order']) }}">
+                                      {{ lang_trans('btn_food_order') }}
+                                  </a>
+                              @else
+                                  <a class="btn btn-xs btn-warning" href="{{route('food-order',[$val->id])}}">
+                                      {{lang_trans('btn_food_order')}}
+                                  </a>
+                              @endif
+                          @endisPermission
 
                             @isPermission('view-reservation')
                               <a class="btn btn-xs btn-primary" href="{{route('view-reservation',[$val->id])}}">{{lang_trans('btn_view_detail')}}</a>
@@ -138,12 +157,15 @@
                             @endisPermission
                             
                             <br/>
-                            <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'org'])}}" target="_blank">{{lang_trans('btn_invoice_room_org')}}</a>
+                            <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'org'])}}" target="_blank">Invoice Venue</a>
                             {{-- <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'dup'])}}" target="_blank">{{lang_trans('btn_invoice_room_dup')}}</a> --}}
                             <a class="btn btn-xs btn-warning" href="{{route('invoice',[$val->id,2])}}" target="_blank">{{lang_trans('btn_invoice_food')}}</a>
                             
                             @isPermission('cancel-reservation')
-                              <a class="btn btn-xs btn-danger" href="{{route('cancel-reservation',[$val->id])}}" onclick="return confirm('{{lang_trans("txt_are_you_sure")}}')">{{lang_trans('btn_cancel')}}</a>
+                            <a class="btn btn-xs btn-danger cancel_btn" data-url="{{ route('cancel-reservation', [$val->id]) }}" href="javascript:void(0);">
+                              {{ lang_trans('btn_cancel') }}
+                            </a>
+
                             @endisPermission
 
                             @include('backend/model/advance_pay_modal',['val'=>$val])
@@ -189,13 +211,18 @@
                         <th>{{lang_trans('txt_action')}}</th>
                       </tr>
                     </thead>
+                    <!-- note : var name change totalAmount to finalAmount -->
                     <tbody>
                       @foreach($datalist as $k=>$val)
                         @if($val->is_checkout == 1)
                         @php 
                           $calc = calcFinalAmount($val);
-                          $totalAmount = $totalAmount+$calc['finalRoomAmount']+$calc['finalOrderAmount']+$calc['additionalAmount'];
+                          $finalAmount = $totalAmount+$calc['finalRoomAmount']+$calc['finalOrderAmount']+$calc['additionalAmount'];
                           $j++; 
+
+                          $paymentHistory = \App\Models\PaymentHistory::where('tbl_id',$val->id)->orderBy('created_at', 'desc')->get();
+                          $totalPayment = $paymentHistory->sum('payment_amount') - $finalAmount;
+
                         @endphp
                         <tr>
                           <td>{{$j}}</td>
@@ -207,9 +234,12 @@
                             @include('backend/model/booked_rooms_modal',['val'=>$val])
                           </td>
                           <td class="text-center {{($val->payment_status == 1) ? 'text-success' : 'text-danger'}}">
-                            {{config('constants.PAYMENT_STATUS')[$val->payment_status]}}
-                            @if($val->payment_status == 0)
-                              <button type="button" class="btn btn-xs btn-success confirm_btn" data-url="{{route('mark-as-paid',[$val->id])}}">{{lang_trans('btn_mark_as_paid')}}</button>
+                            @if($totalPayment >= $finalAmount )
+                              {{config('constants.PAYMENT_STATUS')[$val->payment_status]}}                            
+                              &nbsp;&nbsp;<button class="btn btn-xs btn-success " data-toggle="modal" data-target="#advance_pay_history_{{$val->id}}">View</button>
+                            @else
+                              <button class="btn btn-xs btn-success" data-toggle="modal" data-target="#advance_pay_{{$val->id}}">{{lang_trans('btn_mark_as_paid')}}</button>
+                              <!-- <button type="button" class="btn btn-xs btn-success confirm_btn" data-url="{{route('mark-as-paid',[$val->id])}}">{{lang_trans('btn_mark_as_paid')}}</button> -->
                             @endif
                           </td>
                           <td>{{dateConvert($val->check_in,'d-m-Y H:i')}}</td>
@@ -217,14 +247,18 @@
                           <td>{{getCurrencySymbol()}} {{numberFormat($calc['finalRoomAmount']+$calc['finalOrderAmount']+$calc['additionalAmount'])}}</td>
                           <td>
                             <a class="btn btn-xs btn-success" href="{{route('view-reservation',[$val->id])}}">{{lang_trans('btn_view')}}</a>
-                            <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'org'])}}" target="_blank">{{lang_trans('btn_invoice_room_org')}}</a>
+                            <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'org'])}}" target="_blank">Invoice Venue</a>
                             {{-- <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'dup'])}}" target="_blank">{{lang_trans('btn_invoice_room_dup')}}</a> --}}
                             <a class="btn btn-xs btn-warning" href="{{route('invoice',[$val->id,2])}}" target="_blank">{{lang_trans('btn_invoice_food')}}</a>
+                            @include('backend/model/advance_pay_modal',['val'=>$val])
+                            @include('backend/model/advance_pay_history_modal',['val'=>$val])
                           </td>
+
                         </tr>
                         @endif
                       @endforeach
                     </tbody>
+
                   </table>
                   <table class="table table-striped table-bordered">
                       <tr>

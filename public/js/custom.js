@@ -582,6 +582,42 @@ if($('#customers')[0] != undefined){
             }
         });
     });
+
+    $(document).on('click','.cancel_btn',function(){
+    	var deleteUrl = $(this).data('url');
+    	swal({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, cancel it!'
+    	}).then(function (result) {
+            if (result.value) {
+                window.location.href=deleteUrl;
+            }
+    	});
+    });
+
+    // $(document).on('click','.check_out_btn',function(){
+    // 	var deleteUrl = $(this).data('url');
+    //     var finalAmount = $(this).data('amount'); // Get finalAmount from data attribute
+
+    // 	swal({
+    //         title: 'Are you sure?',
+    //         text: "This booking has a Balance due of  ₹" + finalAmount + ". Do you still want to checkout?",
+    //         type: 'warning',
+    //         showCancelButton: true,
+    //         confirmButtonColor: '#3085d6',
+    //         cancelButtonColor: '#d33',
+    //         confirmButtonText: 'Yes, Check out!'
+    // 	}).then(function (result) {
+    //         if (result.value) {
+    //             window.location.href=deleteUrl;
+    //         }
+    // 	});
+    // });
 /* ***** start swal alert ***** */
 
 /* ***** start custom functions ***** */

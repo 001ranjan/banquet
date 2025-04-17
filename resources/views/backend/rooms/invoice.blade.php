@@ -203,12 +203,14 @@
                 </thead>
                 <tbody>
                     @if($data_row->booked_rooms) 
-                        @foreach($data_row->booked_rooms as $key => $roomInfo)
+                      @foreach($data_row->booked_rooms as $key => $roomInfo)
                             @php
                                 $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
                                 $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
-                                $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
+                                //$durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
                                 // $amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
+                                $durOfStayPerRoom = (strtotime($checkOut) - strtotime($checkIn)) / (60 * 60 * 24) + 1;
+
                                 $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
                                 $amountPerRoom = $priceInfo[1];
                             @endphp
@@ -243,10 +245,10 @@
                     </tr>
                     @endif
                         @if($advancePayment>0)
-                    <tr>
+                    <!-- <tr>
                         <th class="text-right" colspan="5">Less Advance</th>
                         <td class="text-right">{{ numberFormat($advancePayment) }}</td>
-                    </tr>
+                    </tr> -->
                     @endif
                     @if($roomAmountDiscount>0)
                     <tr>
@@ -262,7 +264,7 @@
                     @endif
                     <tr>
                         <th class="text-right" colspan="5">Grand Total</th>
-                        <td class="text-right">{{ numberFormat($finalRoomAmount) }}</td>
+                        <td class="text-right">{{ numberFormat($amountPerRoom + $roomAmountGst + $roomAmountCGst - $roomAmountDiscount + $additionalAmount) }}</td>
                     </tr>
                     <tr>
                         <th class="text-right" colspan="2">Amount in Words:-</th>
@@ -330,24 +332,25 @@
                     <tr>
                         <th class="text-center">{{lang_trans('txt_sno')}}.</th>
                         <th class="text-center">Item Details</th>
-                        <th class="text-center">Item Category</th>
+                        <!-- <th class="text-center">Item Category</th> -->
                         <th class="text-center">HSN/SAC</th>
                         <th class="text-center">Date</th>
-                        <th class="text-center">Item Price ({{getCurrencySymbol()}})</th>
+                        <th class="text-center">Item Qty </th>
+                        <th class="text-center">Item Price ({{getCurrencySymbol()}}) </th>
+                        <th class="text-center">Amount ({{getCurrencySymbol()}})</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($data_row->orders_items as $k => $val)
-                      @php
-                        $totalOrdersAmount = $totalOrdersAmount + ($val->item_qty*$val->item_price);
-                      @endphp
                         <tr>
                             <td class="text-center">{{$k+1}}</td>
                             <td>{{$val->item_name}}</td>
-                            <td>{{ $val->json_data['category_name'] ?? 'N/A' }}</td>
+                            <!-- <td>{{ $val->json_data['category_name'] ?? 'N/A' }}</td> -->
                             <td class="text-center">9963</td>
                             <td class="text-center">{{dateConvert($val->check_out,'d-m-Y')}}</td>
-                            <td class="text-center">{{numberFormat($val->item_price)}}</td>
+                            <td class="text-center">{{$val->item_qty}}</td>
+                            <td class="text-center">{{ getCurrencySymbol() }} {{ numberFormat($val->item_price) }}</td>
+                            <td class="text-center">{{numberFormat($val->item_price * $val->item_qty)}}</td>
                         </tr>
                     @empty
                     <tr>
@@ -355,33 +358,33 @@
                     </tr>
                     @endforelse
                     <tr>
-                        <th class="text-right" colspan="5">Total</th>
+                        <th class="text-right" colspan="6">Total</th>
                         <td class="text-right">{{ numberFormat($totalOrdersAmount) }}</td>
                     </tr>
                     @if($foodAmountGst>0)
                     <tr>
-                        <th class="text-right" colspan="5">GST ({{$gstPercFood}} %)</th>
+                        <th class="text-right" colspan="6">GST ({{$gstPercFood}} %)</th>
                         <td class="text-right">{{ numberFormat($foodAmountGst) }}</td>
                     </tr>
                     @endif
                         @if($foodAmountCGst>0)
                     <tr>
-                        <th class="text-right" colspan="5">CGST ({{$cgstPercFood}} %)</th>
+                        <th class="text-right" colspan="6">CGST ({{$cgstPercFood}} %)</th>
                         <td class="text-right">{{ numberFormat($foodAmountCGst) }}</td>
                     </tr>
                     @endif
                     @if($foodOrderAmountDiscount>0)
                         <tr>
-                            <th class="text-right" colspan="5">Discount</th>
+                            <th class="text-right" colspan="6">Discount</th>
                             <td class="text-right">{{ numberFormat($foodOrderAmountDiscount) }}</td>
                         </tr>
                     @endif
                     <tr>
-                        <th class="text-right" colspan="5">Grand Total</th>
+                        <th class="text-right" colspan="6">Grand Total</th>
                         <td class="text-right">{{ numberFormat($finalOrderAmount) }}</td>
                     </tr>
                     <tr>
-                        <th class="text-right" colspan="2">Amount in Words:-</th>
+                        <th class="text-right" colspan="3">Amount in Words:-</th>
                         <td class="class-inv-17" colspan="5">{{ getIndianCurrency(numberFormat($finalOrderAmount)) }}</td>
                     </tr>
                     <tr>
@@ -437,7 +440,7 @@
         </div>
     </div>
     <div>
-        {!! $settings['invoice_term_condition'] !!}
+        <!-- {!! $settings['invoice_term_condition'] !!} -->
     </div>
 @endif
 <div class="col-sm-12 text-center no-print">

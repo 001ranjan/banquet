@@ -1,8 +1,11 @@
-<tr class="tr-bg" data-type="{{ $category['type'] }}">
-    <td colspan="4" style="padding-left: 10px;">
-        <b>{{ $category['name'] }}</b>
-    </td>
-</tr>
+{{-- Display category name only once --}}
+@if(count($category['food_items']) > 0)
+    <tr class="tr-bg" data-type="{{ $category['type'] }}">
+        <td colspan="4" style="padding-left: 10px;">
+            <b>{{ $category['name'] }}</b>
+        </td>
+    </tr>
+@endif
 
 {{-- Display food items for this category --}}
 @foreach($category['food_items'] as $foodItem)
@@ -22,10 +25,8 @@
         <td>
             <!-- Circle Indicator -->
             <span class="food-indicator {{ strtolower($foodItem->type) == 'veg' ? 'veg' : 'non-veg' }}"></span>
-            {{ $foodItem->name }}
+            {{ $foodItem->name }} 
         </td>
-        <td width="15%">{{ getCurrencySymbol() }} {{ $foodItem->price }}</td>
-        {{-- {{ Form::hidden('items['.$foodItem->id.']','1'.'~'.$foodItem->name.'~'.$foodItem->name.'~'.$foodItem->price,['data-price' => $foodItem->price,'class' => "form-control col-md-6 col-xs-12 item_qty","min"=>0]) }} --}}
         {{ Form::hidden(
             'items[' . $foodItem->id . ']', 
             $foodItem->category_id . '~' . $categoryName . '~' . $foodItem->name . '~' . $foodItem->price, 

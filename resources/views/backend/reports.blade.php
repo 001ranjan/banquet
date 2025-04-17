@@ -56,6 +56,7 @@
                         <th>{{lang_trans('txt_customer_name')}}</th> --}}
                         <th>{{lang_trans('txt_transaction_id')}}</th>
                         <th>{{lang_trans('txt_activity')}}</th>
+                        <th>Reference</th>
                         <th>{{lang_trans('txt_payment_mode')}}</th>
                         <th>{{lang_trans('txt_date')}}</th>
                         <th>{{lang_trans('txt_total_amount')}}</th>
@@ -80,6 +81,7 @@
                           <td>{{($val->customer) ? $val->customer->name : ''}}</td> --}}
                           <td>{{$val->transaction_id}}</td>
                           <td>{{getPaymentPurpose($val->purpose)}}</td>
+                          <td>{{ ($val->reference) ?? '' }}</td>
                           <td>{{$val->payment_type}}</td>
                           <td>{{dateConvert($val->payment_date  ,'d-m-Y H:i')}}</td>
                           <td class="text-right {{($val->payment_of=='cr' ? 'text-success' : 'text-danger')}}">

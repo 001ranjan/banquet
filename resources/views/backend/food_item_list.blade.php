@@ -15,6 +15,7 @@
                     <tr>
                       <th>{{ lang_trans('txt_sno') }}</th>
                       <th>{{ lang_trans('txt_category') }}</th>
+                      <th>menu</th>
                       <th>{{ lang_trans('txt_item_name') }}</th>
                       <th>{{ lang_trans('txt_price') }}</th>
                       <th>{{ lang_trans('txt_desc') }}</th>
@@ -28,6 +29,11 @@
                       <tr>
                         <td>{{ $k+1 }}</td>
                         <td>{{ $val->category->name }}</td>
+                        <td>
+                            @foreach($val->menus as $menu)
+                                {{ $menu->menu_name }}{{ !$loop->last ? ', ' : '' }}
+                            @endforeach
+                        </td>
                         <td>{{ $val->name }}</td>
                         <td>{{ getCurrencySymbol() }} {{ $val->price }}</td>
                         <td>{!! $val->description !!}</td>
