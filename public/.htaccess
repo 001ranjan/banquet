@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+    RewriteRule ^$ /admin [L,R=302]
+    
+    RewriteRule ^public/(.*)$ /var/www/events/banquet-main/public/$1 [L]
+
+
+    # Handle static files
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Redirect to index.php
+    RewriteRule ^ index.php [L]
+
+</IfModule>

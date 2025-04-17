@@ -201,7 +201,7 @@
                                 <tr>
                                   <th>{{lang_trans('txt_sno')}}</th>
                                   <th>{{lang_trans('txt_title')}}</th>
-                                  <th>{{lang_trans('txt_capacity')}}</th>
+                                  <th>{{lang_trans('txt_max_capacity')}}</th>
                                   <th>{{lang_trans('txt_base_price')}}</th>
                                   <th>{{lang_trans('txt_room')}}</th>
                                 </tr>
@@ -211,7 +211,7 @@
                                   <tr>
                                     <td>{{$key+1}}</td>
                                     <td>{{$val->title}}</td>
-                                    <td>{{lang_trans('txt_adults')}}: {{$val->adult_capacity}} &nbsp; {{lang_trans('txt_kids')}}: {{$val->kids_capacity}} </td>
+                                    <td>{{lang_trans('txt_adults')}}: {{$val->adult_capacity}}</td>
                                     <td>{{getCurrencySymbol()}} {{$val->base_price}}</td>
                                     <td>
                                         @if($val->rooms->count())

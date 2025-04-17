@@ -89,6 +89,10 @@ return [
       1=>'Paid',
       0=>'Unpaid',
     ],
+    'LIST_TYPE'=>[
+      'Veg'=>'Veg', 
+      'Non-Veg'=>'Non-Veg'
+    ],
     'LIST_STATUS'=>[
       1=>'Active', 
       0=>'Inactive'
@@ -136,7 +140,7 @@ return [
       'other',
     ],
     'LIST_ROOM_CATEGORY'=>[
-        'room'=>'Venue',
+        'room'=>'Room',
         'hall'=>'Hall',
     ],
     'ROOM_PLANS'=>[

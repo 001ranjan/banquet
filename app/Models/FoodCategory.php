@@ -8,8 +8,15 @@ class FoodCategory extends Model
 {
 	use HasFactory;
 
-	protected $guarded = ['id'];
-	protected $fillable = ['parent_id', 'name', 'status', 'is_deleted'];
+	protected $table = "food_categories";
+    protected $fillable = [
+        'parent_id',
+        'name',
+        'status',
+        'is_deleted',
+    ];
+    public $timestamps = true;
+
 
 	// Newly Added
 	public function children()
@@ -23,10 +30,17 @@ class FoodCategory extends Model
     }
 
 	function food_items(){
-	 	// return $this->hasMany('App\Models\FoodItem','category_id','id')->where('status',1)->where('is_deleted',0)->orderBy('name','ASC');
-		return $this->hasMany('App\Models\FoodItem', 'category_id', 'id')
+	 	return $this->hasMany(FoodItem::class, 'category_id', 'id')
 			->where('status', 1)
 			->where('is_deleted', 0)
 			->orderBy('name', 'ASC');
 	}
+
+	public function specialFoodItems() {
+        return $this->hasMany(SpecialFoodItem::class, 'category_id','id');
+    }
+
+	public function specialFoodItemRemarks() {
+        return $this->hasOne(SpecialFoodRemark::class, 'category_id','id');
+    }
 }

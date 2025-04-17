@@ -71,7 +71,7 @@ function getNextPrevDate($isDate='prev', $days=null){
 }
 
 function addSubDate($isDate, $val, $date, $format='d-m-Y', $adsSub='days'){
-    //$isDate: +,- | $val: numericVal | $adsSub: days, months, year
+    // $isDate: +,- | $val: numericVal | $adsSub: days, months, year
     return date($format, strtotime($date. $isDate.$val.' '.$adsSub));
 }
 
@@ -90,24 +90,25 @@ function timeAgo($date) {
 
         $diff = round($diff);
         if($diff < 10){
-            return dateConvert($date, 'Y-m-d h:i');
+            return dateConvert($date, 'Y-m-d h:i:s');
         }
         return $diff . " " . $strTime[$i] . "(s) ago ";
    }
 }
-function dateConvert($date=null,$format=null){
-    if($date==null)
+
+function dateConvert($date = null, $format = null) {
+    if ($date == null)
         return date($format);
-    if($format==null)
-        return date('Y-m-d',strtotime($date));
+    if ($format == null)
+        return date('Y-m-d', strtotime($date));
     else 
-        return date($format,strtotime($date));
+        return date($format, strtotime($date));
 }
 
 function dateDiff($sDate, $eDate, $format = 'days'){
-    $date1=date_create($sDate);
-    $date2=date_create($eDate);
-    $diff=date_diff($date1,$date2);
+    $date1 = date_create($sDate);
+    $date2 = date_create($eDate);
+    $diff  = date_diff($date1,$date2);
     if($format == 'days') {
         return $diff->format("%a");
     }
@@ -115,13 +116,11 @@ function dateDiff($sDate, $eDate, $format = 'days'){
 }
 
 function dateRange($first, $last, $step = '+1 day', $output_format = 'Y-m-d' ) {
-
     $dates = array();
     $current = strtotime($first);
     $last = strtotime($last);
 
     while( $current <= $last ) {
-
         $dates[] = date($output_format, $current);
         $current = strtotime($step, $current);
     }
@@ -154,10 +153,10 @@ function splitText($string=null, $splitBy = ','){
 }
 
 function limit_text($text, $limit) {
-  if (strlen($text) > $limit) {
+    if (strlen($text) > $limit) {
         $text = substr($text, 0, $limit) . '...';
-  }
-  return $text;
+    }
+    return $text;
 }
 
 function limit_words($string, $word_limit) {

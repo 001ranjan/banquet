@@ -8,17 +8,22 @@ class FoodItem extends Model
 {
 	use HasFactory;
 
-	protected $guarded = ['id'];
-	protected $fillable = ['category_id', 'name', 'price', 'description', 'status', 'is_deleted'];
+	protected $table = "food_items";
+    protected $fillable = [
+        'category_id',
+        'name',
+        'price',
+        'description',
+        'status',
+        'type',
+        'is_deleted',
+    ];
+    public $timestamps = true;
 
-	// Newly Addes
+
+	// Newly Added
 	public function category()
     {
-        return $this->belongsTo(FoodCategory::class, 'category_id');
+        return $this->belongsTo(FoodCategory::class, 'category_id', 'id');
     }
-
-	// Old
-	// function category(){
-	//  	return $this->hasOne('App\Models\FoodCategory','id','category_id');
-	// }
 }

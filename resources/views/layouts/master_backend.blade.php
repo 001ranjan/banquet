@@ -121,39 +121,39 @@
 
                                 {{-- notification list --}}
                                 <li role="presentation" class="dropdown">
-                                 <a href="javascript:;" class="dropdown-toggle info-number notifi-list" data-userid="{{Auth::user()->id}}" data-toggle="dropdown" aria-expanded="false">
-                                  <i class="fa fa-bell-o"></i>
-                                  @if($notificationsData['totalUnread'])
-                                    <span class="badge bg-red">{{$notificationsData['totalUnread']}}</span>
-                                  @endif
-                                 </a>
-                                 <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
-                                    @if($notificationsData['datalist']->count())
-                                      @foreach($notificationsData['datalist'] as $val)
+                                    <a href="javascript:;" class="dropdown-toggle info-number notifi-list" data-userid="{{Auth::user()->id}}" data-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa fa-bell-o"></i>
+                                        @if($notificationsData['totalUnread'])
+                                            <span class="badge bg-red">{{$notificationsData['totalUnread']}}</span>
+                                        @endif
+                                    </a>
+                                    <ul id="menu1" class="dropdown-menu list-unstyled msg_list" role="menu">
+                                        @if($notificationsData['datalist']->count())
+                                        @foreach($notificationsData['datalist'] as $val)
+                                            <li>
+                                                <a>
+                                                    <span class="image"><img src="{{url('public/images/user_img.png')}}" alt="Profile Image" /></span>
+                                                    <span>
+                                                        <span>{{$val['from_user']['name']}}</span>
+                                                        <span class="time">{{timeAgo($val['notifi_datetime'])}}</span>
+                                                    </span>
+                                                    <span class="message">
+                                                        {{limit_text($val['notifi_msg'], 100)}}
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                        @else
                                         <li>
-                                         <a>
-                                           <span class="image"><img src="{{url('public/images/user_img.png')}}" alt="Profile Image" /></span>
-                                           <span>
-                                            <span>{{$val['from_user']['name']}}</span>
-                                            <span class="time">{{timeAgo($val['notifi_datetime'])}}</span>
-                                           </span>
-                                           <span class="message">
-                                            {{limit_text($val['notifi_msg'], 100)}}
-                                           </span>
-                                         </a>
+                                            <a>
+                                                <span class="message text-danger">
+                                                    {{lang_trans('txt_no_notifi')}}
+                                                </span>
+                                            </a>
                                         </li>
-                                      @endforeach
-                                    @else
-                                      <li>
-                                         <a>
-                                           <span class="message text-danger">
-                                              {{lang_trans('txt_no_notifi')}}
-                                           </span>
-                                         </a>
-                                        </li>
-                                    @endif
-                                 </ul>
-                              </li>
+                                        @endif
+                                    </ul>
+                                </li>
                             </ul>
                         </nav>
                     </div>
@@ -181,22 +181,58 @@
                 </footer>
             </div>
         </div>
-         <script src="{{URL::asset('public/assets/bootstrap/dist/js/bootstrap.min.js')}}"></script>
-          <script src="{{URL::asset('public/assets/fastclick/lib/fastclick.js')}}"></script>
-          <script src="{{URL::asset('public/assets/nprogress/nprogress.js')}}"></script>
-          <script src="{{URL::asset('public/assets/DateJS/build/date.js')}}"></script>
-          <script src="{{URL::asset('public/assets/iCheck/icheck.min.js')}}"></script>
+        <script src="{{URL::asset('public/assets/bootstrap/dist/js/bootstrap.min.js')}}"></script>
+        <script src="{{URL::asset('public/assets/fastclick/lib/fastclick.js')}}"></script>
+        <script src="{{URL::asset('public/assets/nprogress/nprogress.js')}}"></script>
+        <script src="{{URL::asset('public/assets/DateJS/build/date.js')}}"></script>
+        <script src="{{URL::asset('public/assets/iCheck/icheck.min.js')}}"></script>
 
-          <script src="{{URL::asset('public/assets/datatables.net/js/jquery.dataTables.min.js')}}"></script>
-          <script src="{{URL::asset('public/assets/datatables.net-bs/js/dataTables.bootstrap.min.js')}}"></script>
-          <script src="{{URL::asset('public/assets/sweetalert2-7.0.0/sweetalert2.all.min.js')}}"></script>
-          <script src="{{URL::asset('public/assets/summernote-0.8.8/dist/summernote-bs4.min.js')}}"></script>
-          @yield('jquery')
+        <script src="{{URL::asset('public/assets/datatables.net/js/jquery.dataTables.min.js')}}"></script>
+        <script src="{{URL::asset('public/assets/datatables.net-bs/js/dataTables.bootstrap.min.js')}}"></script>
+        <script src="{{URL::asset('public/assets/sweetalert2-7.0.0/sweetalert2.all.min.js')}}"></script>
+        <script src="{{URL::asset('public/assets/summernote-0.8.8/dist/summernote-bs4.min.js')}}"></script>
+        
+        @yield('jquery')
 
-          <script src="{{URL::asset('public/assets/js/custom.min.js')}}"></script>
-          <script src="{{URL::asset('public/js/custom.js')}}"></script>
-          <script src="{{URL::asset('public/js/ajax_call.js')}}"></script>
-          <script src="{{URL::asset('public/vendor/livewire/livewire.js?id=de3fca26689cb5a39af4')}}"></script>
+        <script src="{{URL::asset('public/assets/js/custom.min.js')}}"></script>
+        <script src="{{URL::asset('public/js/custom.js')}}"></script>
+        <script src="{{URL::asset('public/js/ajax_call.js')}}"></script>
+        <script src="{{URL::asset('public/vendor/livewire/livewire.js?id=de3fca26689cb5a39af4')}}"></script>
 
+        <script>
+            $(document).ready(function () {
+                // Attach the click event using event delegation
+                $(document).on('click', '.btn-view-food-items', function () {
+                    const reservationId = $(this).data('reservation-id');
+                    const modalBody = $('#modal-food-content-' + reservationId);
+
+                    // Debugging: Ensure the button is firing
+                    // alert('Fetching food orders for reservation ID: ' + reservationId);
+
+                    // Show a loading message while the request is processed
+                    modalBody.html('<p class="text-center">Loading...</p>');
+
+                    // Fetch food orders using AJAX
+                    $.ajax({
+                        url: "{{ route('fetch-food-orders') }}",
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            reservation_id: reservationId
+                        },
+                        success: function (response) {
+                            if (response.html) {
+                                modalBody.html(response.html);
+                            } else {
+                                modalBody.html('<p class="text-danger">No food orders found.</p>');
+                            }
+                        },
+                        error: function () {
+                            modalBody.html('<p class="text-danger">Failed to load food orders. Please try again.</p>');
+                        }
+                    });
+                });
+            });
+        </script>
     </body>
 </html>

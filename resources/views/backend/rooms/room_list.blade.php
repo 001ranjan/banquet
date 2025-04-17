@@ -15,6 +15,7 @@
                     <tr>
                       <th>{{lang_trans('txt_sno')}}</th>
                       <th>{{lang_trans('txt_room_type')}}</th>
+                      {{-- <th>{{lang_trans('txt_max_capacity')}}</th> --}}
                       <th>{{lang_trans('txt_name')}}</th>
                       <th>{{lang_trans('txt_room_num')}}</th>
                       <th>{{lang_trans('txt_floor')}}</th>
@@ -28,6 +29,7 @@
                       <tr>
                         <td>{{$k+1}}</td>
                         <td>{{$val->room_type->title}}</td>
+                        {{-- <td>{{$val->room_type->adult_capacity}}</td> --}}
                         <td>{{$val->room_name}}</td>
                         <td>{{$val->room_no}}</td>
                         <td>{{getDynamicDropdownById($val->floor, 'dropdown_value')}}</td>

@@ -196,9 +196,8 @@
                                 @php
                                   $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
                                   $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
-                                  $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days');
-                                  $durOfStayPerRoom = ($durOfStayPerRoom == 0) ? 1: $durOfStayPerRoom;
-                                  //$amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
+                                  $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
+                                  // $amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
                                   $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
                                   $amountPerRoom = $priceInfo[1];
 

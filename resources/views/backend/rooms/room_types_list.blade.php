@@ -17,7 +17,7 @@
                       <th>{{lang_trans('txt_title')}}</th>
                       <th>{{lang_trans('txt_floor')}}</th>
                       <th>{{lang_trans('txt_type')}}</th>
-                      <th>{{lang_trans('txt_capacity')}}</th>
+                      <th>{{lang_trans('txt_max_capacity')}}</th>
                       <th>{{lang_trans('txt_base_price')}}</th>
                       <th>{{lang_trans('txt_sort_order_num')}}</th>
                       <th>{{lang_trans('txt_status')}}</th>
@@ -31,7 +31,8 @@
                         <td>{{$val->title}}</td>
                         <td>{{getDynamicDropdownById($val->floor, 'dropdown_value')}}</td>
                         <td>{{$room_categories[$val->is_type]}}</td>
-                        <td>{{lang_trans('txt_adults')}}: {{$val->adult_capacity}} &nbsp; {{lang_trans('txt_kids')}}: {{$val->kids_capacity}} </td>
+                        {{-- <td>{{lang_trans('txt_adults')}}: {{$val->adult_capacity}} &nbsp; {{lang_trans('txt_kids')}}: {{$val->kids_capacity}} </td> --}}
+                        <td>{{$val->adult_capacity}}</td>
                         <td>{{getCurrencySymbol()}} {{$val->base_price}}</td>
                         <td>{{$val->order_num}}</td>
                         <td>{!! getStatusBtn($val->status) !!}</td>
@@ -47,7 +48,6 @@
                           @isPermission('delete-room-types')
                             <button class="btn btn-danger btn-sm delete_btn" data-url="{{route('delete-room-types',[$val->id])}}" title="{{lang_trans('btn_delete')}}"><i class="fa fa-trash"></i></button>
                           @endisPermission
-                          
                         </td>
                       </tr>
                     @endforeach

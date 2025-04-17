@@ -6,8 +6,6 @@ $permissionsArr = getRoutePermission();
     <ul class="nav side-menu">
       @if($permissionsArr['dashboard']) <li><a href="{{route('dashboard')}}"><i class="fa fa-home"></i> {{lang_trans('sidemenu_dashboard')}} </a></li> @endif
       
-      {{-- @if($permissionsArr['room-reservation'] && $permissionsArr['quick-check-in']) <li><a href="{{route('quick-check-in', ['step'=>1])}}"><i class="fa fa-check-square-o"></i> {{lang_trans('sidemenu_quick_checkin')}} </a></li> @endif --}}
-
       @if($permissionsArr['add-lead'] || $permissionsArr['edit-lead'] || $permissionsArr['list-lead'])
         <li><a><i class="fa fa-check-square-o"></i>{{lang_trans('sidemenu_leads')}} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
@@ -23,7 +21,7 @@ $permissionsArr = getRoutePermission();
             {{-- @if($permissionsArr['quick-check-in']) <li><a href="{{route('quick-check-in', ['step'=>1])}}">{{lang_trans('sidemenu_quick_checkin')}} </a></li> @endif --}}
             @if($permissionsArr['room-reservation']) <li><a href="{{route('room-reservation', ['step'=>1])}}">{{lang_trans('sidemenu_checkin_add')}} </a></li> @endif
             @if($permissionsArr['list-reservation']) <li><a href="{{route('list-reservation')}}">{{lang_trans('sidemenu_checkin_all')}} </a></li> @endif
-            {{-- @if($permissionsArr['list-check-outs']) <li><a href="{{route('list-check-outs')}}">{{lang_trans('sidemenu_checkout_all')}} </a></li> @endif --}}
+            @if($permissionsArr['list-check-outs']) <li><a href="{{route('list-check-outs')}}">{{lang_trans('sidemenu_checkout_all')}} </a></li> @endif
             @if($permissionsArr['list-cancelled-reservations']) <li><a href="{{route('list-cancelled-reservations')}}">{{lang_trans('sidemenu_cancelled_reservation')}} </a></li> @endif
           </ul>
         </li>

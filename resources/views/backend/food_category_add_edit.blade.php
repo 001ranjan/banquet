@@ -27,7 +27,7 @@
                     @endif
                 
                     <div class="form-group">
-                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="parent_id">{{ lang_trans('txt_parent_category') }}</label>
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="parent_id">{{ lang_trans('txt_categories') }}</label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <select name="parent_id" id="parent_id" class="form-control">
                                 <option value="0">None</option>

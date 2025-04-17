@@ -1,26 +1,26 @@
-<?php 
-use App\Models\Permission;
-use App\Models\Setting;
-use App\Models\Reservation;
-use App\Models\Order;
-use App\Models\OrderHistory;
+<?php
+use App\Models\Role;
 use App\Models\Room;
-use App\Models\RoomType;
-use App\Models\BookedRoom;
-use App\Models\Amenities;
 use App\Models\Unit;
-use App\Models\Customer;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Vendor;
+use App\Models\Setting;
 use App\Models\Country;
+use App\Models\RoomType;
+use App\Models\Language;
+use App\Models\Customer;
+use App\Models\Amenities;
+use App\Models\BookedRoom;
+use App\Models\Permission;
+use App\Models\Reservation;
+use App\Models\LaundryOrder;
+use App\Models\Notification;
+use App\Models\OrderHistory;
 use App\Models\PaymentHistory;
 use App\Models\DynamicDropdown;
-use App\Models\User;
-use App\Models\Role;
 use App\Models\ExpenseCategory;
-use App\Models\Notification;
-use App\Models\Language;
 use App\Models\LanguageTranslation;
-use App\Models\Vendor;
-use App\Models\LaundryOrder;
 
 function getPaginationNum($num = 10){
     return $num;
@@ -78,14 +78,17 @@ function getAuthUserInfo($info = 'all'){
     }
     return $user;
 }
+
 function getCustomerInfo($customerId){
     return Customer::where('id', $customerId)->first();
 }
+
 function setSettings(){
     $settings = Setting::pluck('value','name');
     Session::put('settings', $settings);
     return $settings;
 }
+
 function getSettings($clm=null){
     // if(Session::get('settings')){
     //     $settings = Session::get('settings');
@@ -101,6 +104,7 @@ function getSettings($clm=null){
     }
     return '';
 }
+
 function getDynamicDropdownById($id, $clm = 'all'){
     $data = DynamicDropdown::whereId($id)->first();
     if($data){
@@ -110,9 +114,11 @@ function getDynamicDropdownById($id, $clm = 'all'){
     }
     return $data;
 }
+
 function getDynamicDropdownRecord($where){
     return DynamicDropdown::where($where)->first();
 }
+
 function getDynamicDropdownList($dropdownName){
     $data = DynamicDropdown::where('dropdown_name', $dropdownName)->where('is_deleted', 0)->where('status', 1)->get();
     $list = [];
@@ -123,12 +129,15 @@ function getDynamicDropdownList($dropdownName){
     }
     return $list;
 }
+
 function getCountries(){
     return Country::orderBy('name', 'ASC')->pluck('name','id');
 }
+
 function getUnits(){
     return getDynamicDropdownList('measurement');
 }
+
 function getRoomList($listType = 1){
     if($listType==2){
         $roomList = [];
@@ -142,15 +151,19 @@ function getRoomList($listType = 1){
     }
     return Room::select('id',DB::raw('CONCAT(room_no, " (", room_name,")") AS title'))->whereStatus(1)->whereIsDeleted(0)->orderBy('room_no','ASC')->pluck('title','id');
 }
+
 function getRoomByNum($roomNum){
     return Room::where('room_no', $roomNum)->first();
 }
+
 function getRoomById($roomId){
     return Room::where('id', $roomId)->first();
 }
+
 function getRoomTypeById($id){
     return RoomType::where('id', $id)->first();
 }
+
 function getRoomTypesList($listType = 'original'){
     if($listType == 'custom'){
         return RoomType::select('id',DB::raw('CONCAT(title, " (Price: ", base_price,")") AS title'))->whereStatus(1)->whereIsDeleted(0)->orderBy('order_num','ASC')->pluck('title','id');
@@ -159,43 +172,52 @@ function getRoomTypesList($listType = 'original'){
         return RoomType::whereStatus(1)->whereIsDeleted(0)->orderBy('order_num','ASC')->pluck('title','id');
     }
 }
+
 function getRoomTypesListWithRooms(){
     return RoomType::with('rooms')->whereStatus(1)->whereIsDeleted(0)->orderBy('order_num','ASC')->get();
 }
+
 function getReservationById($id){
     return Reservation::whereId($id)->first();
 }
+
 function getAmenitiesById($id){
     return Amenities::where('id', $id)->first();
 }
+
 function getCustomerByUserId($userId){
     return Customer::whereUserId($userId)->first();
 }
+
 function getCustomerList($type='pluck'){
     if($type == 'get') return Customer::select('id',DB::raw('CONCAT(name, " (", mobile,")") AS display_text'))->whereNotNull('name')->whereIsDeleted(0)->orderBy('name','ASC')->get();
     else return Customer::select('id',DB::raw('CONCAT(name, " (", mobile,")") AS display_text'))->whereIsDeleted(0)->orderBy('name','ASC')->pluck('display_text','id');
 }
+
 function getHousekeeperList($type='pluck'){
     if($type == 'get') return User::select('id',DB::raw('CONCAT(name, " (", mobile,")") AS display_text'))->whereNotNull('name')->whereIsDeleted(0)->where('role_id', 7)->orderBy('name','ASC')->get();
     else return User::select('id',DB::raw('CONCAT(name, " (", mobile,")") AS display_text'))->whereIsDeleted(0)->orderBy('name','ASC')->where('role_id', 7)->pluck('display_text','id');
 }
+
 function getVendorList($type='pluck'){
     if($type == 'get') Vendor::with('category', 'country')->where('is_deleted', 0)->orderBy('vendor_name','ASC')->get();
     else return Vendor::where('is_deleted', 0)->orderBy('vendor_name','ASC')->pluck('vendor_name','id');
 }
+
 function getExpenseCategoryList(){
     return ExpenseCategory::whereStatus(1)->orderBy('name','ASC')->pluck('name','id');
 }
+
 function getRoomsWithPrice($params = []){
     $totalNight = 0;
     if(isset($params['checkin_date']) && isset($params['checkout_date'])){
         $checkinDate = dateConvert($params['checkin_date']);
         $checkoutDate = dateConvert($params['checkout_date']);
         $bookingDateRange = dateRange($checkinDate, $checkoutDate,'+1 day','Y-m-d');
-        $totalNight = dateDiff($checkinDate, $checkoutDate);
+        $totalNight = dateDiff($checkinDate, $checkoutDate) == 0 ? 1 : (dateDiff($checkinDate, $checkoutDate) + 1);
     }
 
-    $roomTypesQuery=RoomType::with('rooms','room_price')->whereStatus(1)->whereIsDeleted(0)->orderBy('order_num','ASC');
+    $roomTypesQuery = RoomType::with('rooms','room_price')->whereStatus(1)->whereIsDeleted(0)->orderBy('order_num','ASC');
     if(isset($params['room_type_ids'])){
         $roomTypesQuery->whereIn('id', $params['room_type_ids']);
     }
@@ -222,13 +244,11 @@ function getRoomsWithPrice($params = []){
             'dates_with_price'=> $priceList[0],
             'total_price'=> $priceList[1],
         ];
-
         
         if($roomTypeVal->room_price->count()){
             foreach ($roomTypeVal->room_price as $roomPriceVal) {
                 if($roomPriceVal->season_info){
                     $dateRange = dateRange($roomPriceVal->season_info->start_date, $roomPriceVal->season_info->end_date,'+1 day','Y-m-d');
-                    
                     foreach ($dateRange as $sDate) {
                         $dayName = strtolower(date('D', strtotime($sDate)));
                         $daysArr = splitText($roomPriceVal->season_info->days);
@@ -247,10 +267,11 @@ function getRoomsWithPrice($params = []){
     }
     return $datalist;
 }
+
 function getDatesWithPrice($params){
     $dateWisePrice = [];
     $totalPrice = 0;
-    foreach ($params['bookingDateRange'] as $bdKey=>$bookingDateVal) {
+    foreach ($params['bookingDateRange'] as $bdKey => $bookingDateVal) {
         $roomPrice = ($bdKey < $params['totalNight']) ? $params['roomBasePrice'] : 0;
         if(isset($params['dateRange'][$bookingDateVal]) && $bdKey < $params['totalNight']){
             $roomPrice = ($bdKey < $params['totalNight']) ? $params['dateRange'][$bookingDateVal] : 0;
@@ -260,6 +281,7 @@ function getDatesWithPrice($params){
     }
     return [$dateWisePrice, numberFormat($totalPrice)];
 }
+
 function getBookedRooms($params = []){
     $bookedRooms = [];
     $query = Reservation::with('booked_rooms')->whereStatus(1)->whereIsDeleted(0)->whereIsCheckout(0)->orderBy('created_at','DESC');
@@ -293,7 +315,6 @@ function getBookedRooms($params = []){
                             } 
                         }                     
                     }
-                    
                     if($v->is_checkout == 0 && $isBooked){
                         $bookedRooms[$v->room_id] = $v->room_id;
                     }
@@ -349,7 +370,6 @@ function getCalendarEventsByDate($params){
                 'url'=>route('check-out-room',[$v->reservation_id]),
                 'extendedProps'=>['is_booked'=>1, 'room_info'=>$v->room],
             ];
-
         }
     }
 
@@ -373,6 +393,7 @@ function getCalendarEventsByDate($params){
     }
     return $datalist;
 }
+
 function getWeekDaysList($params){
     $list = config('constants.WEEK_DAYS');
     $data = [];
@@ -383,6 +404,7 @@ function getWeekDaysList($params){
     }
     return $data;
 }
+
 function getCurrencyList(){
     $list = config('currencies')['CURRENCY_LIST'];
     $currencies = [];
@@ -391,6 +413,7 @@ function getCurrencyList(){
     }
     return $currencies;
 }
+
 function getCurrencySymbol($isCode=false){
     $settings = getSettings();
     if(isset($settings['currency_symbol']) && $settings['currency_symbol']!='' && !$isCode){
@@ -401,6 +424,7 @@ function getCurrencySymbol($isCode=false){
     }
     return ($isCode) ? 'USD' : '$';
 }
+
 function getCountryList(){
     $list = config('constants.COUNTRY_LIST');
     foreach($list as $k=>$val){
@@ -408,6 +432,7 @@ function getCountryList(){
     }
     return $countries;
 }
+
 function getRoles(){
     $roles = [];
     $cacheKey = getCacheKey('rolesListCache');
@@ -419,6 +444,7 @@ function getRoles(){
     }
     return $roles;
 }
+
 function getFormatedPermissionsList($permissions){
     $roles = getRoles();
     $permissionArr = [];
@@ -429,6 +455,7 @@ function getFormatedPermissionsList($permissions){
     }
     return $permissionArr;
 }
+
 function getPermissions($type){
     $permissionArr = [];    
     if($type=='menu'){
@@ -452,12 +479,15 @@ function getPermissions($type){
     }
     return $permissionArr;
 }
+
 function getMenuPermission(){
     return getPermissions('menu');
 }
+
 function getRoutePermission(){
     return getPermissions('route');
 }
+
 function isPermission($route){
     $permissionArr = getRoutePermission();
     if(isset($permissionArr[$route])){
@@ -480,6 +510,7 @@ function checkFile($filename,$path,$default=null) {
     }
     return $src;      
 }
+
 function unlinkImg($img,$path) {
     if($img !=null || $img !='')
     {
@@ -493,8 +524,8 @@ function unlinkImg($img,$path) {
 function getNextInvoiceNo($type=null){
     $initNum = 1;
     if($type=='ph'){
-        //$data = PaymentHistory::whereNotNull('transaction_id')->orderBy('transaction_id','DESC')->first();
-        //return ($data) ? $data->transaction_id + 1 : $initNum;
+        // $data = PaymentHistory::whereNotNull('transaction_id')->orderBy('transaction_id','DESC')->first();
+        // return ($data) ? $data->transaction_id + 1 : $initNum;
         $data = genRandomValue(8, 'mix');
         return $data;
     }
@@ -509,6 +540,7 @@ function getNextInvoiceNo($type=null){
     $data = Reservation::whereNotNull('invoice_num')->orderBy('invoice_num','DESC')->first();
     return ($data) ? $data->invoice_num + 1 : $initNum;
 }
+
 function getStatusBtn($status, $listType = 1){
     $statusList = config('constants.LIST_STATUS');
     $btnClass = ['btn-default', 'btn-success', 'btn-danger'];
@@ -538,6 +570,7 @@ function getStatusBtn($status, $listType = 1){
         return '<button type="button" class="btn btn-xs '.$btnClass[$status].'">'.$txt.'</button>';
     }
 }
+
 function getTableNums($excOrderId=0){
     $bookedTablesQuery =  OrderHistory::where('is_book',1);
     if($excOrderId>0){
@@ -554,6 +587,7 @@ function getTableNums($excOrderId=0){
 function isTableBook($tableNum=0){
     return OrderHistory::where('table_num',$tableNum)->where('is_book',1)->orderBy('id','DESC')->first();
 }
+
 function getOrderInfo($id){
     return Order::where('reservation_id',$id)->first();
 }
@@ -576,7 +610,8 @@ function gstCalc($amount,$type,$gstPerc=null,$cgstPerc=null){
     }
     
     return ['gst'=>$gstAmount, 'cgst'=>$cgstAmount];
-} 
+}
+
 function getDateWisePriceList($data){
     $decodedData = json_decode($data, true);
     $total = 0;
@@ -587,6 +622,7 @@ function getDateWisePriceList($data){
     }
     return [$decodedData ? $decodedData : [], $total];
 }
+
 function calcFinalAmount($val, $isTotalWithGst = 0){
     $settings = getSettings();
     $totalAmount = 0;  
@@ -620,8 +656,8 @@ function calcFinalAmount($val, $isTotalWithGst = 0){
     $advancePayment = ($val->advance_payment > 0 ) ? $val->advance_payment : 0;
     $additionalAmount = ($val->addtional_amount > 0 ) ? $val->addtional_amount : 0;
 
-    $finalRoomAmount = $totalAmount+$totalRoomAmountGst+$totalRoomAmountCGst-$advancePayment-$totalRoomAmountDiscount;
-
+    // $finalRoomAmount = $totalAmount+$totalRoomAmountGst+$totalRoomAmountCGst-$advancePayment-$totalRoomAmountDiscount;
+    $finalRoomAmount = $totalAmount+$totalRoomAmountGst+$totalRoomAmountCGst-$totalRoomAmountDiscount; //New
 
     //start calculation of order amount
     $totalOrderAmountGst = $totalOrderAmountCGst = $totalOrderAmountDiscount = $orderGstPerc = $orderCGstPerc = 0;
@@ -723,7 +759,7 @@ function checkAmount($val){
 }
 
 function getMaxDiscount($amount,$perc=100){
-    //$maxDiscount = ($perc/100)*$amount;
+    // $maxDiscount = ($perc/100)*$amount;
     $maxDiscount = $amount;
     return $maxDiscount;
 }  
@@ -733,6 +769,7 @@ function stockInfoColor($stock){
     if($stock < 50) return 'bg-warning';
     return "";
 }
+
 function checkboxTickOrNot($value, $val_from=null){
     if($val_from=='view'){
         if($value == 1) return true; else return false;
@@ -740,9 +777,11 @@ function checkboxTickOrNot($value, $val_from=null){
         if($value == 'on') return 1; else return 0;
     }
 }
+
 function getIcon($icon, $defaultIcon='ti-shine'){
     return $icon ? $icon : $defaultIcon;
 }
+
 function getPaymentPurpose($type){
     $datalist = config('constants.PAYMENT_PURPOSE');
     if(isset($datalist[$type])){
@@ -750,6 +789,7 @@ function getPaymentPurpose($type){
     }
     return '';
 }
+
 function getPaymentModeById($id){
     $datalist = config('constants.PAYMENT_MODES');
     if(isset($datalist[$id])){
@@ -757,6 +797,7 @@ function getPaymentModeById($id){
     }
     return 'Cash';
 }
+
 function getPaymentOptions($isList = 'admin'){
     $datalist = config('constants.PAYMENT_MODES');
     if($isList == 'admin'){
@@ -770,6 +811,7 @@ function getPaymentOptions($isList = 'admin'){
         return $datalist;
     }
 }
+
 function getConstants($list, $exclude = []){
     if($list == 'LIST_LAUNDRY_ORDER_STATUS'){
         $datalist = config('constants.LIST_LAUNDRY_ORDER_STATUS');
@@ -788,6 +830,7 @@ function getConstants($list, $exclude = []){
     }
     return null;
 }
+
 function getBookingStatus($data){
     $status = ['Pending', 'Confirmed', 'Completed', 'Expired'];
     $statusText = 'Pending';
@@ -812,6 +855,7 @@ function getBookingStatus($data){
     }
     return ['status'=>$statusText, 'statusClass'=>$statusClass];
 }
+
 function getSplashMsg($params){
     $data = ['success'=>'', 'error'=>''];
     if(isset($params['type']) && $params['type'] == 'add_update'){
@@ -825,6 +869,7 @@ function getSplashMsg($params){
     }
     return $data;
 }
+
 function getLangForUpdateDisable(){
     return ['en', 'hi'];
 }

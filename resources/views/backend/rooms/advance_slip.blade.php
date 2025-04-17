@@ -1,141 +1,140 @@
 @php 
-  $settings = getSettings();
+    $settings = getSettings();
 @endphp
 <!DOCTYPE html>
 <html lang="en">
-     <head>
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <meta charset="utf-8">
-        <meta content="IE=edge" http-equiv="X-UA-Compatible">
-        <meta content="width=device-width, initial-scale=1" name="viewport">
-        <title>{{$settings['site_page_title']}}: Invoice</title>
-        <link href="{{URL::asset('public/assets/bootstrap/dist/css/bootstrap.min.css')}}" rel="stylesheet">
-        <link href="{{URL::asset('public/css/invoice_style.css')}}" rel="stylesheet">
-    </head>
-    <body>
-        @php 
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>{{$settings['site_page_title']}}: Invoice</title>
+    <link href="{{URL::asset('public/assets/bootstrap/dist/css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{URL::asset('public/css/invoice_style.css')}}" rel="stylesheet">
+</head>
+<body>
+    @php 
         $invTypeList = ['org'=>'ORIGINAL', 'dup'=>'DUPLICATE'];
         $invoiceType = (isset($invTypeList[Request::segment(5)])) ? $invTypeList[Request::segment(5)] : '';
-  $jsonDecode = json_decode($data_row->amount_json);
+        $jsonDecode = json_decode($data_row->amount_json);
 
-  $discount = (isset($jsonDecode->room_amount_discount)) ? $jsonDecode->room_amount_discount : 0;
+        $discount = (isset($jsonDecode->room_amount_discount)) ? $jsonDecode->room_amount_discount : 0;
 
-  $durOfStay = $data_row->duration_of_stay;
-  $perRoomPrice = $data_row->per_room_price;
-  $roomQty = $data_row->room_qty;
-  $totalAmount = ($durOfStay * $perRoomPrice * $roomQty); 
+        $durOfStay = $data_row->duration_of_stay;
+        $perRoomPrice = $data_row->per_room_price;
+        $roomQty = $data_row->room_qty;
+        $totalAmount = ($durOfStay * $perRoomPrice * $roomQty); 
 
-  $gstPerc = $data_row->gst_perc;
-  $cgstPerc = $data_row->cgst_perc;
+        $gstPerc = $data_row->gst_perc;
+        $cgstPerc = $data_row->cgst_perc;
 
-  $gst =  gstCalc($totalAmount,'room_amount',$gstPerc,$cgstPerc);
-  $roomAmountGst = $gst['gst'];
-  $roomAmountCGst = $gst['cgst'];
+        $gst =  gstCalc($totalAmount,'room_amount',$gstPerc,$cgstPerc);
+        $roomAmountGst = $gst['gst'];
+        $roomAmountCGst = $gst['cgst'];
 
-  $advancePayment = $data_row->advance_payment;  
-  $finalAmount = $totalAmount+$roomAmountGst+$roomAmountCGst-$advancePayment-$discount;
-  
-  $totalOrdersAmount = 0;
+        $advancePayment = $data_row->advance_payment;  
+        $finalAmount = $totalAmount+$roomAmountGst+$roomAmountCGst-$advancePayment-$discount;
+        
+        $totalOrdersAmount = 0;
 
-  $invoiceNum = $data_row->invoice_num;
-  if($type==2){
-    $invoiceNum = ($data_row->orders_info!=null) ? $data_row->orders_info->invoice_num : '';
-  }
-
-  $rooms = [];
-  if($data_row->room_num){
-    $exp = explode(',', $data_row->room_num);
-    foreach($exp as $roomNum){
-        $roomData = getRoomByNum($roomNum);
-        if($roomData){
-            $rooms[$roomNum] = $roomData->room_name;
+        $invoiceNum = $data_row->invoice_num;
+        if($type==2){
+            $invoiceNum = ($data_row->orders_info!=null) ? $data_row->orders_info->invoice_num : '';
         }
-    }
-  }
-@endphp
-        <div class="container">
-            <div class="row">
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 class-inv-11">
-                    <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-                        <strong>
-                            GSTIN: {{$settings['gst_num']}}
-                        </strong>
-                    </div>
-                    <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 text-center">
-                        <strong>
-                            Advance Slip
-                        </strong>
-                    </div>
-                    <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 text-right">
-                        <strong>
-                            Ph. {{$settings['hotel_phone']}}
-                        </strong>
-                        <br/>
-                        <strong>
-                            (M) {{$settings['hotel_mobile']}}
-                        </strong>
-                    </div>
-                </div>
-            </div>
-            <div class="row text-center p-rel">
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                    <span class="class-inv-12">
-                        {{$settings['hotel_name']}}
-                    </span>
-                </div>
+
+        $rooms = [];
+        if($data_row->room_num){
+            $exp = explode(',', $data_row->room_num);
+            foreach($exp as $roomNum){
+                $roomData = getRoomByNum($roomNum);
+                if($roomData){
+                    $rooms[$roomNum] = $roomData->room_name;
+                }
+            }
+        }
+    @endphp
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 class-inv-11">
                 <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-                    <img src="{{checkFile(@$settings['site_logo'],'uploads/logo/','default_logo.jpg')}}" width="{{@$settings['site_logo_width']}}" height="{{@$settings['site_logo_height']}}" class="inv-logo">
+                    <strong>
+                        GSTIN: {{$settings['gst_num']}}
+                    </strong>
                 </div>
-                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-                    <div class="class-inv-13">
-                        {{$settings['hotel_tagline']}}
-                    </div>
+                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 text-center">
+                    <strong>
+                        Advance Slip
+                    </strong>
                 </div>
-                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-                </div>
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                    <div class="class-inv-14">
-                        {{$settings['hotel_address']}}
-                    </div>
-                </div>
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                    <div class="class-inv-15">
-                        <span>
-                            {{$settings['hotel_website']}}
-                        </span>
-                        |
-                        <span>
-                            E-mail:-
-                        </span>
-                        <span>
-                            {{$settings['hotel_email']}}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 class-inv-6">
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-                        {{-- <strong class="fsize-label">
-                            No.:
-                            <span class="class-inv-19">
-                                {{$invoiceNum}}
-                            </span>
-                        </strong> --}}
-                    </div>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 text-right">
-                        <br/>
-                        <strong class="fsize-label">
-                            Dated :
-                        </strong>
-                        <spa class-inv-16n="">
-                            {{dateConvert($data_row->created_at,'d-m-Y H:i')}}
-                        </spa>
-                    </div>
+                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 text-right">
+                    <strong>
+                        Ph. {{$settings['hotel_phone']}}
+                    </strong>
+                    <br/>
+                    <strong>
+                        (M) {{$settings['hotel_mobile']}}
+                    </strong>
                 </div>
             </div>
         </div>
-    </body>
+        <div class="row text-center p-rel">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <span class="class-inv-12">
+                    {{$settings['hotel_name']}}
+                </span>
+            </div>
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                <img src="{{checkFile(@$settings['site_logo'],'uploads/logo/','default_logo.jpg')}}" width="{{@$settings['site_logo_width']}}" height="{{@$settings['site_logo_height']}}" class="inv-logo">
+            </div>
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                <div class="class-inv-13">
+                    {{$settings['hotel_tagline']}}
+                </div>
+            </div>
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4"></div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <div class="class-inv-14">
+                    {{$settings['hotel_address']}}
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <div class="class-inv-15">
+                    <span>
+                        {{$settings['hotel_website']}}
+                    </span>
+                    |
+                    <span>
+                        E-mail:-
+                    </span>
+                    <span>
+                        {{$settings['hotel_email']}}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 class-inv-6">
+                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                    {{-- <strong class="fsize-label">
+                        No.:
+                        <span class="class-inv-19">
+                            {{$invoiceNum}}
+                        </span>
+                    </strong> --}}
+                </div>
+                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 text-right">
+                    <br/>
+                    <strong class="fsize-label">
+                        Dated :
+                    </strong>
+                    <spa class-inv-16n="">
+                        {{dateConvert($data_row->created_at,'d-m-Y H:i')}}
+                    </spa>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>
 <div class="row">
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">

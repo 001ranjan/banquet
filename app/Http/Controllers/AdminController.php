@@ -1,25 +1,43 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
-use App\Http\Requests\ExpenseCategoryRequest;
-use Auth, DB, Hash, Session;
-use App\Models\User, App\Models\Customer, App\Models\Role;
-use App\Models\Room, App\Models\RoomType, App\Models\RoomPrice, App\Models\BookedRoom;
-use App\Models\Amenities;
-use App\Models\FoodCategory, App\Models\FoodItem;
-use App\Models\ExpenseCategory, App\Models\Expense;
-use App\Models\Product, App\Models\StockHistory;
-use App\Models\Reservation;
-use App\Models\Order, App\Models\OrderItem, App\Models\OrderHistory;
-use App\Models\Setting;
-use App\Models\PersonList;
-use App\Models\DynamicDropdown;
-use App\Models\MediaFile;
-use App\Models\Permission;
+
+use DB;
+use Auth;
+use Hash;
+use Session;
+use App\Models\User;
+use App\Models\Role;
+use App\Models\Room;
+use App\Models\Order;
 use App\Models\Season;
+use App\Models\Setting;
+use App\Models\Product;
+use App\Models\Expense;
+use App\Models\FoodItem;
+use App\Models\RoomType;
+use App\Models\Customer;
+use App\Models\MediaFile;
+use App\Models\Amenities;
+use App\Models\RoomPrice;
+use App\Models\OrderItem;
+use App\Models\Permission;
+use App\Models\PersonList;
+use App\Models\BookedRoom;
+use App\Models\Reservation;
+use Illuminate\Http\Request;
+use App\Models\FoodCategory;
+use App\Models\StockHistory;
+use App\Models\OrderHistory;
 use App\Models\PaymentHistory;
+use App\Models\DynamicDropdown;
+use App\Models\ExpenseCategory;
+use App\Models\SpecialFoodItem;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\SpecialFoodRemark;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\ExpenseCategoryRequest;
 
 class AdminController extends Controller
 {
@@ -128,8 +146,8 @@ class AdminController extends Controller
     }
 
     public function editRoom(Request $request){
-        $this->data['roomtypes_list']=getRoomTypesList();
-        $this->data['data_row']=Room::whereId($request->id)->first();
+        $this->data['roomtypes_list'] = getRoomTypesList();
+        $this->data['data_row'] = Room::whereId($request->id)->first();
         if(!$this->data['data_row']){
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
         }
@@ -147,7 +165,9 @@ class AdminController extends Controller
             $success = config('constants.FLASH_REC_ADD_1');
             $error = config('constants.FLASH_REC_ADD_0');
         }
-        $res = Room::updateOrCreate(['id' => $request->id],$request->except(['_token','amenities_ids']));
+
+        // $res = Room::updateOrCreate(['id' => $request->id],$request->except(['_token','amenities_ids']));  \\Older
+        $res = Room::updateOrCreate(['id' => $request->id],$request->except(['_token']));
         
         if($res){
             $mediaData = [
@@ -182,13 +202,13 @@ class AdminController extends Controller
 
     /* ***** Start Room Types Functions ***** */
     public function addRoomType() {
-        $this->data['amenities_list']=$this->getAmenitiesList();
+        $this->data['amenities_list'] = $this->getAmenitiesList();
         return view('backend/rooms/room_types_add_edit',$this->data);
     }
 
     public function editRoomType(Request $request){
-        $this->data['amenities_list']=$this->getAmenitiesList();
-        $this->data['data_row']=RoomType::whereId($request->id)->first();
+        $this->data['amenities_list'] = $this->getAmenitiesList();
+        $this->data['data_row'] = RoomType::whereId($request->id)->first();
         if(!$this->data['data_row']){
             return redirect()->back()->with(['error' => config('constants.FLASH_REC_NOT_FOUND')]);
         }
@@ -196,17 +216,18 @@ class AdminController extends Controller
     }
 
     public function saveRoomType(Request $request) {
-        $splashMsg = getSplashMsg(['id'=>$request->id, 'type'=>'add_update']);
+        $splashMsg = getSplashMsg(['id' => $request->id, 'type'=>'add_update']);
         if($request->id>0){
             if($this->core->checkWebPortal()==0){
                 return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
             } 
         } 
 
-        $request->merge([
-            'amenities'=> implode(',', $request->amenities_ids)
-        ]);
-        $res = RoomType::updateOrCreate(['id'=>$request->id],$request->except(['_token','amenities_ids']));
+        // $request->merge([
+        //     'amenities'=> implode(',', $request->amenities_ids)
+        // ]);
+        // $res = RoomType::updateOrCreate(['id' => $request->id],$request->except(['_token','amenities_ids']));
+        $res = RoomType::updateOrCreate(['id' => $request->id],$request->except(['_token']));
         
         if($res){
             $mediaData = [
@@ -352,8 +373,8 @@ class AdminController extends Controller
             if($step == 2){
                 $inDate = dateConvert($request->check_in_date);
                 $outDate = dateConvert($request->check_out_date);
-                $this->data['roomlist'] = getRoomsWithPrice(['checkin_date'=>$inDate, 'checkout_date'=>$outDate]);
-                $this->data['booked_rooms'] = getBookedRooms(['checkin_date'=>$inDate, 'checkout_date'=>$outDate]);
+                $this->data['roomlist'] = getRoomsWithPrice(['checkin_date' => $inDate, 'checkout_date' => $outDate]);
+                $this->data['booked_rooms'] = getBookedRooms(['checkin_date' => $inDate, 'checkout_date' => $outDate]);
                 $this->data['rooms'] = Room::whereStatus(1)->whereIsDeleted(0)->orderBy('room_no','ASC')->get();
                 $this->data['uri_params'] = $request->all();
             }
@@ -372,6 +393,7 @@ class AdminController extends Controller
     }
 
     public function saveReservation(Request $request) {
+        // Log::debug(":: Booking Form Submit Data: ::" . print_r($request->all(), true));
         if($request->id>0){
             if($this->core->checkWebPortal()==0){
                 return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
@@ -391,57 +413,59 @@ class AdminController extends Controller
 
         if($request->guest_type=='existing'){
             $customerId = $request->selected_customer_id;
-            $custData = Customer::whereId($customerId)->first();
-            $custName = $custData->name;
+            $custData   = Customer::whereId($customerId)->first();
+            $custName   = $custData->name;
         } else {
             $custName = $request->name;
             if(!$request->name || !$request->mobile || !$request->gender){
                 return redirect()->back()->with(['error' => config('constants.FLASH_FILL_REQUIRED_FIELD')]);
             }
             $customerData = [
-                "surname" => $request->surname,
-                "name" => $request->name,
+                "surname"     => $request->surname,
+                "name"        => $request->name,
                 "middle_name" => $request->middle_name,
                 "father_name" => $request->father_name,
-                "email" => ($request->email) ? $request->email : null,
-                "mobile" => $request->mobile,
-                "address" => $request->address,
+                "email"       => ($request->email) ? $request->email : null,
+                "mobile"      => $request->mobile,
+                "address"     => $request->address,
                 "nationality" => $request->nationality,
-                "country" => $request->country,
-                "state" => $request->state,
-                "city" => $request->city,
-                "gender" => $request->gender,
-                "age" => $request->age,
-                "password" => Hash::make($request->mobile),
+                "country"     => $request->country,
+                "state"       => $request->state,
+                "city"        => $request->city,
+                "gender"      => $request->gender,
+                "age"         => $request->age,
+                "password"    => Hash::make($request->mobile),
             ]; 
             $customerId = Customer::insertGetId($customerData);
 
-            //sync user and customer
+            // sync user and customer
             $this->core->syncUserAndCustomer();
         }
         $reservationData = [
-            "customer_id" => $customerId,
-            "guest_type" => $request->guest_type,
-            "check_in" => dateConvert($request->check_in_date, 'Y-m-d'),
-            "check_out" => dateConvert($request->check_out_date, 'Y-m-d'),
-            "duration_of_stay" => $request->duration_of_stay,
-            "event_type" => $request->event_type,
-            "time_slot" => $request->time_slot,
-            "adult" => $request->adult,
-            "kids" => $request->kids,
-            "booked_by" => $request->booked_by,
-            "vehicle_number" => $request->vehicle_number,
+            "customer_id"       => $customerId,
+            "guest_type"        => $request->guest_type,
+            "check_in"          => dateConvert($request->check_in_date, 'Y-m-d H:i:s'),
+            "check_out"         => dateConvert($request->check_out_date, 'Y-m-d H:i:s'),
+            "duration_of_stay"  => $request->duration_of_stay,
+            "event_type"        => $request->event_type,
+            "time_slot"         => $request->time_slot,
+            "custom_time"       => $request->custom_time,
+            "adult"             => $request->adult,
+            "kids"              => $request->kids,
+            "booked_by"         => $request->booked_by,
+            "vehicle_number"    => $request->vehicle_number,
             "reason_visit_stay" => $request->reason_visit_stay,
-            "advance_payment" => $request->advance_payment,
-            "idcard_type" => $request->idcard_type,
-            "idcard_no" => $request->idcard_no,
-            "referred_by" => $request->referred_by,
-            "referred_by_name" => $request->referred_by_name,
-            "remark_amount" => $request->remark_amount,
-            "remark" => $request->remark,
-            "company_name" => $request->company_name,
-            "company_gst_num" => $request->company_gst_num,
-            "room_plan" => $request->room_plan,
+            "advance_payment"   => $request->advance_payment,
+            "idcard_type"       => $request->idcard_type,
+            "idcard_no"         => $request->idcard_no,
+            "referred_by"       => $request->referred_by,
+            "referred_by_name"  => $request->referred_by_name,
+            "remark_amount"     => $request->remark_amount,
+            "remark"            => $request->remark,
+            "company_name"      => $request->company_name,
+            "company_gst_num"   => $request->company_gst_num,
+            "room_plan"         => $request->room_plan,
+            "payment_mode"      => $request->payment_mode ?? "",
         ];
         if(!$request->id){
             $reservationData["created_at_checkin"] = date('Y-m-d H:i:s');
@@ -456,45 +480,45 @@ class AdminController extends Controller
             // add ledger
             if($request->advance_payment){
                 $where = [
-                    'purpose' => 'ROOM_ADVANCE',
-                    'tbl_id' => $res->id,
+                    'purpose'  => 'ROOM_ADVANCE',
+                    'tbl_id'   => $res->id,
                     'tbl_name' => 'reservations',
                 ];
                 $paymentHistoryData = $where;
-                $paymentHistoryData['payment_date'] = date('Y-m-d H:i:s');
-                $paymentHistoryData['customer_id'] = $res->customer_id;
-                $paymentHistoryData['user_id'] = getCustomerInfo($res->customer_id)->user_id;
-                $paymentHistoryData['added_by'] = Auth::user()->id;
+                $paymentHistoryData['payment_date']   = date('Y-m-d H:i:s');
+                $paymentHistoryData['customer_id']    = $res->customer_id;
+                $paymentHistoryData['user_id']        = getCustomerInfo($res->customer_id)->user_id;
+                $paymentHistoryData['added_by']       = Auth::user()->id;
                 $paymentHistoryData['payment_amount'] = $request->advance_payment;
-                $paymentHistoryData['payment_type'] = getPaymentModeById($res->payment_mode);
-                $paymentHistoryData['credit_debit'] = 'Debit';
-                $paymentHistoryData['payment_of'] = 'cr';
+                $paymentHistoryData['payment_type']   = getPaymentModeById($res->payment_mode);
+                $paymentHistoryData['credit_debit']   = 'Debit';
+                $paymentHistoryData['payment_of']     = 'cr';
                 $paymentHistoryData['transaction_id'] = getNextInvoiceNo('ph');
                 $this->core->updateOrCreatePH($where, $paymentHistoryData);
             }
 
             $mediaData = [
-                'tbl_id' => $res->id,
-                'media_ids' => $request->media_ids,
-                'files' => ($request->hasFile('id_image')) ? $request->id_image : null,
+                'tbl_id'      => $res->id,
+                'media_ids'   => $request->media_ids,
+                'files'       => ($request->hasFile('id_image')) ? $request->id_image : null,
                 'folder_path' => 'uploads/id_cards',
-                'type' => 'id_cards',
+                'type'        => 'id_cards',
             ];           
             $this->core->uploadAndUnlinkMediaFile($mediaData);
         
             if(isset($request->persons_info['name'])){
                 $personsData = [];
                 $personReqData = $request->persons_info;
-                foreach($personReqData['name'] as $k=>$val){
+                foreach($personReqData['name'] as $k => $val){
                     if($val!=''){
                         $personsData[] = [
                             'reservation_id' => $res->id,
-                            'name' => $val, 
-                            'gender' => $personReqData['gender'][$k], 
-                            'age' => $personReqData['age'][$k], 
-                            'address' => $personReqData['address'][$k], 
-                            'idcard_type' => $personReqData['idcard_type'][$k], 
-                            'idcard_no' => $personReqData['idcard_no'][$k]
+                            'name'           => $val, 
+                            'gender'         => $personReqData['gender'][$k], 
+                            'age'            => $personReqData['age'][$k], 
+                            'address'        => $personReqData['address'][$k], 
+                            'idcard_type'    => $personReqData['idcard_type'][$k], 
+                            'idcard_no'      => $personReqData['idcard_no'][$k]
                         ];
                     }
                 }
@@ -524,21 +548,21 @@ class AdminController extends Controller
                     foreach ($paymetHis as $key => $value) {
                         $paymentHistoryData = []; 
                         $where = [
-                            'purpose'=>str_replace('_REV', '', $value->purpose).'_REV',
-                            'tbl_id'=>$value->tbl_id,
-                            'tbl_name'=>'reservations',
+                            'purpose'  => str_replace('_REV', '', $value->purpose).'_REV',
+                            'tbl_id'   => $value->tbl_id,
+                            'tbl_name' => 'reservations',
                         ];
-                        $paymentHistoryData['purpose'] = $where['purpose'];
-                        $paymentHistoryData['tbl_id'] = $where['tbl_id'];
-                        $paymentHistoryData['tbl_name'] = $where['tbl_name'];
-                        $paymentHistoryData['payment_date'] = date('Y-m-d H:i:s');
-                        $paymentHistoryData['customer_id'] = $value->customer_id;
-                        $paymentHistoryData['user_id'] = $value->user_id;
-                        $paymentHistoryData['added_by'] = Auth::user()->id;
+                        $paymentHistoryData['purpose']        = $where['purpose'];
+                        $paymentHistoryData['tbl_id']         = $where['tbl_id'];
+                        $paymentHistoryData['tbl_name']       = $where['tbl_name'];
+                        $paymentHistoryData['payment_date']   = date('Y-m-d H:i:s');
+                        $paymentHistoryData['customer_id']    = $value->customer_id;
+                        $paymentHistoryData['user_id']        = $value->user_id;
+                        $paymentHistoryData['added_by']       = Auth::user()->id;
                         $paymentHistoryData['payment_amount'] = $value->payment_amount;
-                        $paymentHistoryData['payment_type'] = $value->payment_type;
-                        $paymentHistoryData['credit_debit'] = 'Credit';
-                        $paymentHistoryData['payment_of'] = 'dr';
+                        $paymentHistoryData['payment_type']   = $value->payment_type;
+                        $paymentHistoryData['credit_debit']   = 'Credit';
+                        $paymentHistoryData['payment_of']     = 'dr';
                         $paymentHistoryData['transaction_id'] = getNextInvoiceNo('ph');
                         $this->core->updateOrCreatePH($where, $paymentHistoryData);
                     }
@@ -553,7 +577,7 @@ class AdminController extends Controller
     }
 
     public function viewReservation(Request $request) {
-        $this->data['data_row']=Reservation::with('orders_items','persons', 'booked_rooms')->whereId($request->id)->first();
+        $this->data['data_row'] = Reservation::with('orders_items','persons','booked_rooms')->whereId($request->id)->first();
         return view('backend/rooms/room_reservation_view',$this->data);
     }
 
@@ -573,33 +597,33 @@ class AdminController extends Controller
         $amountArr =  $request->amount;
         $roomDiscount = $request->discount_amount;
         if($request->room_discount_in == 'perc'){
-            $totalAmount = $amountArr['total_room_amount']+$amountArr['total_room_amount_gst']+$amountArr['total_room_amount_cgst'];
+            $totalAmount = $amountArr['total_room_amount'] + $amountArr['total_room_amount_gst'] + $amountArr['total_room_amount_cgst'];
             $roomDiscount = ($roomDiscount/100)*$totalAmount;
         }
         $amountArr['room_amount_discount'] = $roomDiscount;
         $amountArr['additional_amount'] = $request->additional_amount;
         $reservationData = [
-            "check_out" => dateConvert($request->check_out_date, 'Y-m-d H:i'),
+            "check_out"           => dateConvert($request->check_out_date, 'Y-m-d H:i:s'),
             "created_at_checkout" => date('Y-m-d H:i:s'),
-            "duration_of_stay" => $request->duration_of_stay,
-            "amount_json" => json_encode($amountArr),
-            "idcard_type" => $request->idcard_type,
-            "idcard_no" => $request->idcard_no,
-            "company_gst_num"=>$request->company_gst_num,
-            "payment_mode"=>$request->payment_mode,
-            "payment_status"=>$request->payment_status,
-            "is_checkout"=>1,
+            "duration_of_stay"    => $request->duration_of_stay,
+            "amount_json"         => json_encode($amountArr),
+            "idcard_type"         => $request->idcard_type,
+            "idcard_no"           => $request->idcard_no,
+            "company_gst_num"     => $request->company_gst_num,
+            "payment_mode"        => $request->payment_mode,
+            "payment_status"      => $request->payment_status,
+            "is_checkout"         => 1,
 
-            "discount"=>$amountArr['room_amount_discount'],
-            "sub_total"=>$amountArr['total_room_amount'],
-            "gst_perc"=>$settings['gst'],
-            "cgst_perc"=>$settings['cgst'],
-            "gst_amount"=>$amountArr['total_room_amount_gst'],
-            "cgst_amount"=>$amountArr['total_room_amount_cgst'],
-            "grand_total"=>$amountArr['total_room_final_amount'],
+            "discount"            => $amountArr['room_amount_discount'],
+            "sub_total"           => $amountArr['total_room_amount'],
+            "gst_perc"            => $settings['gst'],
+            "cgst_perc"           => $settings['cgst'],
+            "gst_amount"          => $amountArr['total_room_amount_gst'],
+            "cgst_amount"         => $amountArr['total_room_amount_cgst'],
+            "grand_total"         => $amountArr['total_room_final_amount'],
 
-            "addtional_amount"=>$amountArr['additional_amount'],
-            "additional_amount_reason"=>$request->additional_amount_reason,
+            "addtional_amount"         => $amountArr['additional_amount'],
+            "additional_amount_reason" => $request->additional_amount_reason,
         ];
         $mobile = '';
         $name = '';
@@ -618,15 +642,15 @@ class AdminController extends Controller
         }
 
         $mediaData = [
-            'tbl_id'=>$request->id,
-            'media_ids'=>$request->media_ids,
-            'files'=>($request->hasFile('id_image')) ? $request->id_image : null,
-            'folder_path'=>'uploads/id_cards',
-            'type'=>'id_cards',
+            'tbl_id'      => $request->id,
+            'media_ids'   => $request->media_ids,
+            'files'       => ($request->hasFile('id_image')) ? $request->id_image : null,
+            'folder_path' => 'uploads/id_cards',
+            'type'        => 'id_cards',
         ];           
         $this->core->uploadAndUnlinkMediaFile($mediaData);
 
-        $res = Reservation::updateOrCreate(['id'=>$request->id], $reservationData);
+        $res = Reservation::updateOrCreate(['id' => $request->id], $reservationData);
         if($res){
 
             //update booked rooms checkout date
@@ -643,12 +667,12 @@ class AdminController extends Controller
             }
 
             $orderInfo['reservation_id'] = $request->id;
-            $orderInfo['invoice_date'] = dateConvert($request->check_out_date, 'Y-m-d H:i');
-            $orderInfo['gst_apply'] = $gstApply;
-            $orderInfo['gst_perc'] = $gstPerc;
-            $orderInfo['cgst_perc'] = $cgstPerc;
-            $orderInfo['gst_amount'] = $gstAmount;
-            $orderInfo['cgst_amount'] = $cgstAmount;
+            $orderInfo['invoice_date']   = dateConvert($request->check_out_date, 'Y-m-d H:i:s');
+            $orderInfo['gst_apply']      = $gstApply;
+            $orderInfo['gst_perc']       = $gstPerc;
+            $orderInfo['cgst_perc']      = $cgstPerc;
+            $orderInfo['gst_amount']     = $gstAmount;
+            $orderInfo['cgst_amount']    = $cgstAmount;
 
             $orderDiscount = $request->discount_order_amount;
             if($request->order_discount_in == 'perc'){
@@ -660,7 +684,7 @@ class AdminController extends Controller
             $orderData = Order::where('reservation_id',$request->id)->first();
             if($orderData){
                 $orderInfo["original_date"] = date('Y-m-d H:i:s');
-               Order::where('reservation_id',$request->id)->update($orderInfo);
+                Order::where('reservation_id',$request->id)->update($orderInfo);
             }
             
             //add ledger
@@ -668,33 +692,33 @@ class AdminController extends Controller
             if($cal){   
                 $paymentHistoryData = [];            
                 $where = [
-                    'purpose'=>'ROOM_AMOUNT',
-                    'tbl_id'=>$resData->id,
-                    'tbl_name'=>'reservations',
+                    'purpose'  => 'ROOM_AMOUNT',
+                    'tbl_id'   => $resData->id,
+                    'tbl_name' => 'reservations',
                 ];
-                $paymentHistoryData['purpose'] = $where['purpose'];
-                $paymentHistoryData['tbl_id'] = $where['tbl_id'];
-                $paymentHistoryData['tbl_name'] = $where['tbl_name'];
-                $paymentHistoryData['payment_date'] = date('Y-m-d H:i:s');
-                $paymentHistoryData['customer_id'] = $res->customer_id;
-                $paymentHistoryData['user_id'] = getCustomerInfo($res->customer_id)->user_id;
-                $paymentHistoryData['added_by'] = Auth::user()->id;
+                $paymentHistoryData['purpose']        = $where['purpose'];
+                $paymentHistoryData['tbl_id']         = $where['tbl_id'];
+                $paymentHistoryData['tbl_name']       = $where['tbl_name'];
+                $paymentHistoryData['payment_date']   = date('Y-m-d H:i:s');
+                $paymentHistoryData['customer_id']    = $res->customer_id;
+                $paymentHistoryData['user_id']        = getCustomerInfo($res->customer_id)->user_id;
+                $paymentHistoryData['added_by']       = Auth::user()->id;
                 $paymentHistoryData['payment_amount'] = $cal['finalRoomAmount'];
-                $paymentHistoryData['payment_type'] = getPaymentModeById($resData->payment_mode);
-                $paymentHistoryData['credit_debit'] = 'Debit';
-                $paymentHistoryData['payment_of'] = 'cr';
+                $paymentHistoryData['payment_type']   = getPaymentModeById($resData->payment_mode);
+                $paymentHistoryData['credit_debit']   = 'Debit';
+                $paymentHistoryData['payment_of']     = 'cr';
                 $paymentHistoryData['transaction_id'] = getNextInvoiceNo('ph');
                 $this->core->updateOrCreatePH($where, $paymentHistoryData);
 
                 if($cal['finalOrderAmount'] > 0){
                     $where = [
-                        'purpose'=>'FOOD_ORDER_AMOUNT',
-                        'tbl_id'=>$orderData->id,
-                        'tbl_name'=>'orders',
+                        'purpose'  => 'FOOD_ORDER_AMOUNT',
+                        'tbl_id'   => $orderData->id,
+                        'tbl_name' => 'orders',
                     ];
-                    $paymentHistoryData['purpose'] = $where['purpose'];
-                    $paymentHistoryData['tbl_id'] = $where['tbl_id'];
-                    $paymentHistoryData['tbl_name'] = $where['tbl_name'];
+                    $paymentHistoryData['purpose']        = $where['purpose'];
+                    $paymentHistoryData['tbl_id']         = $where['tbl_id'];
+                    $paymentHistoryData['tbl_name']       = $where['tbl_name'];
                     $paymentHistoryData['payment_amount'] = $cal['finalOrderAmount'];
                     $this->core->updateOrCreatePH($where, $paymentHistoryData);
                 }
@@ -702,7 +726,7 @@ class AdminController extends Controller
 
             //send sms
             if($mobile!=''){
-                $this->core->sendSms(2,$mobile,['name'=>$name]);
+                $this->core->sendSms(2,$mobile,['name' => $name]);
             } 
             return redirect()->route('list-reservation')->with(['success' => config('constants.FLASH_CHECKOUT_1')]);
         }
@@ -711,7 +735,7 @@ class AdminController extends Controller
 
     public function invoice(Request $request) {
         $this->data['type'] = $request->type;
-        $this->data['data_row'] = Reservation::with('orders_items','orders_info', 'booked_rooms')->whereId($request->id)->first();
+        $this->data['data_row'] = Reservation::with('orders_items', 'orders_info', 'booked_rooms')->whereId($request->id)->first();
         return view('backend/rooms/invoice',$this->data);
     }
 
@@ -724,10 +748,10 @@ class AdminController extends Controller
     public function listCheckOuts() {
         $startDate = getNextPrevDate('prev');
         $this->data['list'] = 'check_outs';
-        $this->data['datalist']=Reservation::with('booked_rooms')->whereDate('check_out', '>=', $startDate." 00:00:00")->whereDate('check_out', '<=', DB::raw('CURDATE()'))->whereStatus(1)->whereIsDeleted(0)->whereIsCheckout(1)->orderBy('created_at','DESC')->get();
-        $this->data['roomtypes_list']=getRoomTypesList();
-        $this->data['customer_list']=getCustomerList('get');
-        $this->data['search_data'] = ['customer_id'=>'','room_type_id'=>'','date_from'=>$startDate, 'date_to'=>date('Y-m-d')];
+        $this->data['datalist'] = Reservation::with('booked_rooms')->whereDate('check_out', '>=', $startDate." 00:00:00")->whereDate('check_out', '<=', DB::raw('CURDATE()'))->whereStatus(1)->whereIsDeleted(0)->whereIsCheckout(1)->orderBy('created_at','DESC')->get();
+        $this->data['roomtypes_list'] = getRoomTypesList();
+        $this->data['customer_list'] = getCustomerList('get');
+        $this->data['search_data'] = ['customer_id' => '','room_type_id' => '','date_from' => $startDate, 'date_to' => date('Y-m-d')];
 
         return view('backend/rooms/room_reservation_list',$this->data);
     }
@@ -758,18 +782,18 @@ class AdminController extends Controller
                 //add ledger
                 if($request->advance_payment){
                     $paymentHistoryData = [
-                        'purpose'=>'ROOM_ADVANCE',
-                        'tbl_id'=>$resData->id,
-                        'tbl_name'=>'reservations',
+                        'purpose'  => 'ROOM_ADVANCE',
+                        'tbl_id'   => $resData->id,
+                        'tbl_name' => 'reservations',
                     ];
-                    $paymentHistoryData['payment_date'] = date('Y-m-d H:i:s');
-                    $paymentHistoryData['customer_id'] = $resData->customer_id;
-                    $paymentHistoryData['user_id'] = getCustomerInfo($resData->customer_id)->user_id;
-                    $paymentHistoryData['added_by'] = Auth::user()->id;
+                    $paymentHistoryData['payment_date']   = date('Y-m-d H:i:s');
+                    $paymentHistoryData['customer_id']    = $resData->customer_id;
+                    $paymentHistoryData['user_id']        = getCustomerInfo($resData->customer_id)->user_id;
+                    $paymentHistoryData['added_by']       = Auth::user()->id;
                     $paymentHistoryData['payment_amount'] = $request->advance_payment;
-                    $paymentHistoryData['payment_type'] = getPaymentModeById($resData->payment_mode);
-                    $paymentHistoryData['credit_debit'] = 'Debit';
-                    $paymentHistoryData['payment_of'] = 'cr';
+                    $paymentHistoryData['payment_type']   = getPaymentModeById($resData->payment_mode);
+                    $paymentHistoryData['credit_debit']   = 'Debit';
+                    $paymentHistoryData['payment_of']     = 'cr';
                     $paymentHistoryData['transaction_id'] = getNextInvoiceNo('ph');
                     $this->core->storePH($paymentHistoryData);
                 }
@@ -785,8 +809,8 @@ class AdminController extends Controller
             return redirect()->back()->with(['error' => config('constants.FLASH_INVALID_PARAMS')]);
         }
         $this->data['reservation_id'] = $request->id;
-        $this->data['booked_rooms'] = getBookedRooms(['reservation_id'=>$request->id]);
-        $this->data['roomtypes_list']=getRoomTypesListWithRooms();
+        $this->data['booked_rooms'] = getBookedRooms(['reservation_id' => $request->id]);
+        $this->data['roomtypes_list'] = getRoomTypesListWithRooms();
         return view('backend/rooms/room_swap',$this->data);
     }
 
@@ -819,16 +843,16 @@ class AdminController extends Controller
         //set new room data array
         $dateDiff = dateDiff(date('Y-m-d'), $bookedRoomData->check_in, 'daysWIthSymbol');
         $checkDate = ($dateDiff < 0) ? date('Y-m-d 00:00:00') : $bookedRoomData->check_in;
-        $priceInfo = getRoomsWithPrice([ 'checkin_date'=>$checkDate, 'checkout_date'=>$bookedRoomData->check_out, 'room_type_ids'=>[$expNewRoom[0]] ]);
+        $priceInfo = getRoomsWithPrice([ 'checkin_date' => $checkDate, 'checkout_date' => $bookedRoomData->check_out, 'room_type_ids' => [$expNewRoom[0]] ]);
 
         $newRoomData = [
-            'reservation_id'=>$request->id,
-            'room_type_id'=>$expNewRoom[0],
-            'room_id'=>$expNewRoom[1],
-            'room_price'=>$roomTypeDetails->base_price,
-            'date_wise_price'=>json_encode($priceInfo[$expNewRoom[0]]['dates_with_price']),
+            'reservation_id' => $request->id,
+            'room_type_id' => $expNewRoom[0],
+            'room_id' => $expNewRoom[1],
+            'room_price' => $roomTypeDetails->base_price,
+            'date_wise_price' => json_encode($priceInfo[$expNewRoom[0]]['dates_with_price']),
             'check_in' => date('Y-m-d H:i:s'),
-            'check_out' =>$bookedRoomData->check_out,
+            'check_out' => $bookedRoomData->check_out,
         ];
         $res = BookedRoom::insert($newRoomData);
         if($res){
@@ -851,12 +875,6 @@ class AdminController extends Controller
     /* ***** Start FoodCategory Functions ***** */
     public function addFoodCategory()
     {
-        // $this->data['categories'] = FoodCategory::where('parent_id',0)
-        //     ->where('status', 1)
-        //     ->where('is_deleted', 0)
-        //     ->pluck('name', 'id')
-        //     ->toArray();
-
         $this->data['categories'] = $this->getCategoryHierarchy();
 
         return view('backend.food_category_add_edit', $this->data);
@@ -913,12 +931,12 @@ class AdminController extends Controller
 
     public function listFoodCategory()
     {
-        $this->data['datalist'] = FoodCategory::with(['children', 'food_items'])
-            ->where('parent_id', 0)
-            ->where('status', 1)
-            ->where('is_deleted', 0)
-            ->orderBy('name', 'ASC')
-            ->get();
+        $this->data['datalist'] = FoodCategory::with('parent')
+        ->where('status', 1)
+        ->where('is_deleted', 0)
+        ->orderBy('parent_id', 'ASC') // Ensures Main Categories come first
+        ->orderBy('name', 'ASC')     // Then orders by name
+        ->get();
 
         return view('backend.food_category_list', $this->data);
     }
@@ -1090,29 +1108,29 @@ class AdminController extends Controller
         
         if($res){
             $mediaData = [
-                'tbl_id'=>$res->id,
-                'media_ids'=>$request->media_ids,
-                'files'=>($request->hasFile('attachments')) ? $request->attachments : null,
-                'folder_path'=>'uploads/expenses',
-                'type'=>'expenses',
+                'tbl_id'      => $res->id,
+                'media_ids'   => $request->media_ids,
+                'files'       => ($request->hasFile('attachments')) ? $request->attachments : null,
+                'folder_path' => 'uploads/expenses',
+                'type'        => 'expenses',
             ];           
             $this->core->uploadAndUnlinkMediaFile($mediaData);
 
-             if($request->amount){
+            if($request->amount){
                 $where = [
-                    'purpose'=>'EXPENSE',
-                    'tbl_id'=>$res->id,
-                    'tbl_name'=>'expenses',
+                    'purpose'  => 'EXPENSE',
+                    'tbl_id'   => $res->id,
+                    'tbl_name' => 'expenses',
                 ];
                 $paymentHistoryData = $where;
-                $paymentHistoryData['payment_date'] = $res->datetime;
-                $paymentHistoryData['customer_id'] = null;
-                $paymentHistoryData['user_id'] = Auth::user()->id;
-                $paymentHistoryData['added_by'] = Auth::user()->id;
+                $paymentHistoryData['payment_date']   = $res->datetime;
+                $paymentHistoryData['customer_id']    = null;
+                $paymentHistoryData['user_id']        = Auth::user()->id;
+                $paymentHistoryData['added_by']       = Auth::user()->id;
                 $paymentHistoryData['payment_amount'] = $res->amount;
-                $paymentHistoryData['payment_type'] = getPaymentModeById('cash');
-                $paymentHistoryData['credit_debit'] = '';
-                $paymentHistoryData['payment_of'] = 'dr';
+                $paymentHistoryData['payment_type']   = getPaymentModeById('cash');
+                $paymentHistoryData['credit_debit']   = '';
+                $paymentHistoryData['payment_of']     = 'dr';
                 $paymentHistoryData['transaction_id'] = getNextInvoiceNo('ph');
                 $this->core->updateOrCreatePH($where, $paymentHistoryData);
             }
@@ -1232,55 +1250,9 @@ class AdminController extends Controller
     /* ***** Start FoodOrders Functions ***** */
     public function listOrders() {
         $this->data['datalist'] = Order::whereDate('created_at', DB::raw('CURDATE()'))->where('status','!=',4)->orderBy('id','DESC')->get();
-        $this->data['search_data'] = ['date_from'=>date('Y-m-d'), 'date_to'=>date('Y-m-d')];
+        $this->data['search_data'] = ['date_from' => date('Y-m-d'), 'date_to' => date('Y-m-d')];
         return view('backend/orders_list',$this->data);
     }
-
-    // public function foodOrder() {
-    //     $this->data['categories_list'] = FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-    //     return view('backend/food_order_page',$this->data);
-    // }
-
-    // public function foodOrderTable(Request $request) {
-    //     $this->data['categories_list'] = FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-    //     $this->data['order_row'] = Order::where('id',$request->segment(3))->first();
-    //     return view('backend/food_order_table_page',$this->data);
-    // }
-
-    // public function foodOrderFinal(Request $request) {
-    //     $this->data['categories_list'] = FoodCategory::with('food_items')->whereStatus(1)->whereIsDeleted(0)->orderBy('name','ASC')->get();
-    //     $this->data['order_row'] = Order::where('id',$request->segment(3))->first();
-    //     return view('backend/food_order_final_page',$this->data);
-    // }
-
-    // public function foodOrder() {
-    //     // Get categories and their food items
-    //     $this->data['categories'] = FoodCategory::with('food_items')
-    //         ->where('status', 1)
-    //         ->where('is_deleted', 0)
-    //         // ->orderBy('name', 'ASC')
-    //         ->get();
-    
-    //     // Group categories by their parent_id
-    //     $groupedCategories = $this->data['categories']->groupBy('parent_id');
-    
-    //     // Recursive function to build the hierarchy
-    //     $buildTree = function ($parentId) use ($groupedCategories, &$buildTree) {
-    //         return $groupedCategories->get($parentId, collect())
-    //             ->map(function ($category) use ($buildTree) {
-    //                 return [
-    //                     'id' => $category->id,
-    //                     'name' => $category->name,
-    //                     'food_items' => $category->food_items,
-    //                     'children' => $buildTree($category->id),
-    //                 ];
-    //             });
-    //     };
-    
-    //     $this->data['categories_tree'] = $buildTree(0); // Start with root categories (parent_id = 0)
-    
-    //     return view('backend/food_order_page', $this->data);
-    // }
 
     public function foodOrder() {
         // Get categories and their food items
@@ -1293,20 +1265,8 @@ class AdminController extends Controller
     
         // Group categories by their parent_id
         $groupedCategories = $this->data['categories']->groupBy('parent_id');
-    
+        
         // Recursive function to build the hierarchy
-        // $buildTree = function ($parentId) use ($groupedCategories, &$buildTree) {
-        //     return $groupedCategories->get($parentId, collect())
-        //         ->map(function ($category) use ($buildTree) {
-        //             return [
-        //                 'id' => $category->id,
-        //                 'name' => $category->name,
-        //                 'food_items' => $category->food_items,
-        //                 'children' => $buildTree($category->id),
-        //             ];
-        //         });
-        // };
-
         $buildTree = function ($parentId) use ($groupedCategories, &$buildTree) {
             return $groupedCategories->get($parentId, collect())
                 ->map(function ($category) use ($buildTree) {
@@ -1325,7 +1285,9 @@ class AdminController extends Controller
         };
     
         $this->data['categories_tree'] = $buildTree(0);
-    
+
+        $this->data['category_tree'] = $this->getCategoryHierarchy(); //For Fetching Food Category Tree In Select
+        
         return view('backend/food_order_page', $this->data);
     }
     
@@ -1353,7 +1315,35 @@ class AdminController extends Controller
         return view('backend/food_order_final_page', $this->data);
     }
 
+    // Fetch Food Order As Per Reservation
+    public function fetchFoodOrders(Request $request)
+    {
+        $reservationId = $request->reservation_id;
+
+        // Validate the reservation ID
+        if (!$reservationId) {
+            return response()->json(['html' => '<p class="text-danger">Invalid reservation ID.</p>']);
+        }
+
+        // Fetch Total Guest
+        $totGuest = Reservation::where('id', $reservationId)->value('adult');
+
+        // Fetch food orders related to the reservation
+        $foodOrders = OrderItem::where('order_id', $reservationId)
+            ->where('reservation_id', $reservationId) // Corrected: Removed quotes
+            ->get();
+
+        // Log::info('Reservation ID: ' . $reservationId);
+        // Log::info('Food Orders: ' . print_r($foodOrders->toArray(), true));
+
+        // Return the view as a response
+        $html = view('backend.model.food_order_list', compact('foodOrders','totGuest'))->render();
+
+        return response()->json(['html' => $html]);
+    }
+
     public function saveFoodOrder(Request $request){
+        // Log::debug(":: Food Order Form Submit Data: ::" . print_r($request->all(), true));
         $insertRec = true;
         $insertRecOrderHistorty = true;
         $orderHistoryResId = null;
@@ -1362,35 +1352,36 @@ class AdminController extends Controller
         $settings = getSettings();
         $orderArr = [];
         $itemsArr = array_filter($request->item_qty);
+        // Log::debug(":: Item Array: " . print_r($itemsArr, true));
         if(count($itemsArr)>0){
             $orderData = [];
             $gstPerc = $cgstPerc = $gstAmount = $cgstAmount = 0;
             if($request->food_gst_apply==1){
-                $gstPerc = $request->gst_perc;
-                $cgstPerc = $request->cgst_perc;
-                $gstAmount = $request->gst_amount;
+                $gstPerc    = $request->gst_perc;
+                $cgstPerc   = $request->cgst_perc;
+                $gstAmount  = $request->gst_amount;
                 $cgstAmount = $request->cgst_amount;
             }
-            $orderInfo= [
-                'reservation_id'=>$request->reservation_id,
-                'invoice_num'=>($request->food_invoice_apply=="on") ? getNextInvoiceNo('orders') : null,
-                'invoice_date'=>$invoiceDate,
-                'table_num'=>$request->table_num,
-                'gst_apply'=>$request->food_gst_apply,
-                'gst_perc'=>$gstPerc,
-                'gst_amount'=>$gstAmount,
-                'cgst_perc'=>$cgstPerc,
-                'cgst_amount'=>$cgstAmount,
-                'discount'=>$request->discount_amount,
-                'total_amount'=>$request->final_amount,
-                'name' => $request->name,
-                'email' => $request->email,
-                'mobile' => $request->mobile,
-                'address' => $request->address,
-                'gender' => $request->gender,
-                'num_of_person' => $request->num_of_person,
-                'waiter_name' => $request->waiter_name,
-                'payment_mode' => $request->payment_mode,
+            $orderInfo = [
+                'reservation_id' => $request->reservation_id,
+                'invoice_num'    => ($request->food_invoice_apply=="on") ? getNextInvoiceNo('orders') : null,
+                'invoice_date'   => $invoiceDate,
+                'table_num'      => $request->table_num,
+                'gst_apply'      => $request->food_gst_apply,
+                'gst_perc'       => $gstPerc,
+                'gst_amount'     => $gstAmount,
+                'cgst_perc'      => $cgstPerc,
+                'cgst_amount'    => $cgstAmount,
+                'discount'       => $request->discount_amount,
+                'total_amount'   => $request->final_amount,
+                'name'           => $request->name,
+                'email'          => $request->email,
+                'mobile'         => $request->mobile,
+                'address'        => $request->address,
+                'gender'         => $request->gender,
+                'num_of_person'  => $request->num_of_person,
+                'waiter_name'    => $request->waiter_name,
+                'payment_mode'   => $request->payment_mode,
             ];
             if($request->page=='ff_order'){
                 $orderInfo['original_date'] = date('Y-m-d H:i:s');
@@ -1400,14 +1391,13 @@ class AdminController extends Controller
 
                     //send sms
                     if($request->mobile){
-                        $this->core->sendSms(3,$request->mobile,['name'=>$request->name]);
+                        $this->core->sendSms(3,$request->mobile,['name' => $request->name]);
                     } 
 
                     return redirect()->route('order-invoice-final',[$request->order_id])->with(['success' => 'Orders Successfully submitted']);
                 } else {
                     return redirect()->back()->with(['error' => 'Order placed failed.Try again']);
                 }
-
             } else {
                 if($request->reservation_id>0){
                     $insertRecOrderHistorty = false;
@@ -1423,37 +1413,143 @@ class AdminController extends Controller
                 if($insertRec){
                     $orderResId = Order::insertGetId($orderInfo);
                 }
+
                 if($insertRecOrderHistorty){
-                    $orderHistoryResId = OrderHistory::insertGetId(['order_id'=>$orderResId, 'table_num'=>$request->table_num]);
+                    $orderHistoryResId = OrderHistory::insertGetId(['order_id' => $orderResId, 'table_num' => $request->table_num]);
                 }
 
-                $lastOrderId = $orderResId; // $orderRes->id;
-                foreach($itemsArr as $k=>$val){
+                // Order ID
+                $lastOrderId = $orderResId;
+
+                // Reservation ID
+                $reservationID = $request->reservation_id;
+
+                // Fetch Customer ID
+                $custID = Reservation::where('id', $reservationID)->value('customer_id');
+
+                // Process Special Requirements
+                if (!empty($request->special_requirement)) {
+                    $specialRequirements = $request->special_requirement;
+                
+                    // Combine the fields into rows and filter out empty ones
+                    $specialItems = [];
+                    foreach ($specialRequirements['name'] as $index => $name) {
+                        if (
+                            !empty($name) &&
+                            !empty($specialRequirements['category_id'][$index]) &&
+                            !empty($specialRequirements['type'][$index]) &&
+                            !empty($specialRequirements['price'][$index])
+                        ) {
+                            // Prepare JSON data for the item
+                            $jsonData = [
+                                'category_id'   => $specialRequirements['category_id'][$index],
+                                'category_name' => FoodCategory::where('id', $specialRequirements['category_id'][$index])->value('name'),
+                                'item_name'     => $name,
+                                'type'          => $specialRequirements['type'][$index],
+                            ];
+                
+                            // Add the item to the array for insertion
+                            $specialItems[] = [
+                                'order_id'         => $lastOrderId,
+                                'order_history_id' => $orderHistoryResId,
+                                'reservation_id'   => $reservationID,
+                                'item_name'        => $name,
+                                'item_price'       => $specialRequirements['price'][$index],
+                                'item_qty'         => 1,
+                                'json_data'        => json_encode($jsonData),
+                                'status'           => 3,
+                                'created_at'       => now(),
+                                'updated_at'       => now(),
+                            ];
+                        }
+                    }
+                
+                    // Insert the filtered records into the database
+                    if (!empty($specialItems)) {
+                        OrderItem::insert($specialItems); // Bulk insert all special items
+                    }
+                }
+
+                // if (!empty($request->special_requirement)) {
+                //     $specialRequirements = $request->special_requirement;
+                
+                //     // Combine the fields into rows and filter out empty ones
+                //     $specialItems = [];
+                //     foreach ($specialRequirements['name'] as $index => $name) {
+                //         if (!empty($name) && !empty($specialRequirements['category_id'][$index]) && !empty($specialRequirements['type'][$index]) && !empty($specialRequirements['price'][$index])) {
+                //             $specialItems[] = [
+                //                 'name'         => $name,
+                //                 'category_id'  => $specialRequirements['category_id'][$index],
+                //                 'type'         => $specialRequirements['type'][$index],
+                //                 'price'        => $specialRequirements['price'][$index],
+                //                 'customer_id'  => $custID,
+                //                 'created_at'   => now(),
+                //                 'updated_at'   => now(),
+                //             ];
+                //         }
+                //     }
+                
+                //     // Insert the filtered records into the database
+                //     if (!empty($specialItems)) {
+                //         SpecialFoodItem::insert($specialItems); // Bulk insert all special items
+                //         // After inserting, fetch the inserted special food items
+                //         $specialFoodItems = SpecialFoodItem::whereIn('name', $specialRequirements['name'])->get(); // Or use another suitable condition
+                //     }
+                // }
+
+                // Process Special Remarks (Inserting the single remark for all special food items)
+                // if (!empty($request->remarks) && isset($specialFoodItems) && $specialFoodItems->isNotEmpty()) {
+                //     foreach ($specialFoodItems as $specialFoodItem) {
+                //         // Insert the remark for each special food item
+                //         $specialFoodRemarksData = [
+                //             'special_food_items_id' => $specialFoodItem->id, // Associate remark with each special food item
+                //             'customer_id' => $custID,
+                //             'remarks' => $request->remarks,
+                //         ];
+
+                //         SpecialFoodRemark::create($specialFoodRemarksData); // Insert the remark for each item
+                //     }
+                // }
+
+                foreach($itemsArr as $k => $val){
+                    // Log::debug(":: Items Data:- ::" . print_r($request->items[$k], true));
                     $exp = explode('~', $request->items[$k]);
-                    $jsonData = ['category_id'=>$exp[0], 'category_name'=>$exp[1], 'item_name'=>$exp[2], 'item_id'=>$k];
-                     $orderArr[] = [
-                        'order_id'=>$lastOrderId, 
-                        'order_history_id'=>$orderHistoryResId, 
-                        'reservation_id'=>$request->reservation_id, 
-                        'item_name'=>$exp[2],
-                        'item_price'=>$exp[3],
-                        'item_qty'=>$val, 
-                        'json_data'=>json_encode($jsonData), 
-                        'status'=>3
+                    // Log::debug(":: Food Items After Filtering:- ::" . print_r($exp, true));
+                    $jsonData = [
+                        'category_id'   => $exp[0],
+                        'category_name' => $exp[1],
+                        'item_name'     => $exp[2],
+                        'item_id'       => $k,
+                        'type'          => FoodItem::where('id', $k)->value('type'),
+                    ];
+                    $orderArr[] = [
+                        'order_id'         => $lastOrderId, 
+                        'order_history_id' => $orderHistoryResId, 
+                        'reservation_id'   => $reservationID, 
+                        'item_name'        => $exp[2],
+                        'item_price'       => $exp[3],
+                        'item_qty'         => $val, 
+                        'json_data'        => json_encode($jsonData), 
+                        'status'           => 3,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
                     ];
                 }
+
+                // Insert the order food items data into the database
                 $res = OrderItem::insert($orderArr);
                 if($res){
                     if($request->reservation_id>0) {
-                        return redirect()->route('kitchen-invoice',['order_id'=>$lastOrderId,'order_type'=>'room-order'])->with(['success' => 'Orders Successfully submitted']);
+                        return redirect()->route('kitchen-invoice',['order_id' => $lastOrderId,'order_type'=>'room-order'])->with(['success' => 'Orders Successfully submitted']);
                     }
-                    return redirect()->route('kitchen-invoice',['order_id'=>$orderHistoryResId,'order_type'=>'table-order'])->with(['success' => 'Orders Successfully submitted']);
+                    return redirect()->route('kitchen-invoice',['order_id' => $orderHistoryResId,'order_type'=>'table-order'])->with(['success' => 'Orders Successfully submitted']);
                 } else {
                     return redirect()->back()->with(['error' => 'Order placed failed.Try again']);
                 }
             }
 
         }
+
         return redirect()->back()->with(['error' => 'Please provide item quantity']);
     }
 
@@ -1466,12 +1562,12 @@ class AdminController extends Controller
 
     public function orderInvoice(Request $request) {
         $id = $request->segment(3);
-        $this->data['data_row']=Order::with('orders_items')->whereId($id)->first();
+        $this->data['data_row'] = Order::with('orders_items')->whereId($id)->first();
         return view('backend/food_order_invoice',$this->data);
     }
 
     public function orderInvoiceFinal(Request $request) {
-        $this->data['data_row']=Order::where('id',$request->segment(3))->first();
+        $this->data['data_row'] = Order::where('id',$request->segment(3))->first();
         return view('backend/food_order_final_invoice',$this->data);
     }
 
@@ -1479,12 +1575,49 @@ class AdminController extends Controller
         $id = $request->segment(3);
         $type = $request->segment(4);
         if($type=='room-order'){
-            $this->data['data_row']=Order::whereId($id)->first();
+            $this->data['data_row'] = Order::whereId($id)->first();
         } else {
-            $this->data['data_row']=OrderHistory::with('order')->whereId($id)->first();
+            $this->data['data_row'] = OrderHistory::with('order')->whereId($id)->first();
         }
          $this->data['type'] = $type;
         return view('backend/kitchen_invoice',$this->data);
+    }
+
+    // Kitchen Order Invoice Download
+    public function downloadKitchenInvoice($id)
+    {
+        $data_row = Order::with('orders_items')->findOrFail($id); // Adjust based on your model
+        $settings = getSettings();
+        $type = 'room-order'; // Set based on your logic
+
+        $pdf = Pdf::loadView('backend.invoice_template', compact('data_row', 'settings', 'type'));
+        return $pdf->download("invoice_{$id}.pdf");
+    }
+
+    public function editKitchenInvoice($id)
+    {
+        $data_row = Order::with('orders_items')->findOrFail($id); // Adjust based on your model
+        $settings = getSettings();
+
+        return view('backend.edit_invoice', compact('data_row', 'settings'));
+    }
+
+    public function updateKitchenInvoice(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        // Validate and update order details
+        $order->update($request->all());
+
+        // Update order items if necessary
+        if ($request->has('order_items')) {
+            foreach ($request->order_items as $item_id => $item_data) {
+                $orderItem = OrderItem::findOrFail($item_id);
+                $orderItem->update($item_data);
+            }
+        }
+
+        return redirect()->route('kitchen-invoice-edit', $id)->with('success', 'Invoice updated successfully.');
     }
 
     public function processFoodOrder(Request $request) {
@@ -1506,7 +1639,7 @@ class AdminController extends Controller
 
     /* ***** Start Setting Functions ***** */
     public function settingsForm() {
-        $this->data['data_row']=Setting::pluck('value','name');
+        $this->data['data_row'] = Setting::pluck('value','name');
         return view('backend/settings',$this->data);
     }
 
@@ -1573,12 +1706,12 @@ class AdminController extends Controller
         $requestExcept = ['_token'];
         $res = null;
         $ids = $request->ids;
-        $superAdmin = $request->super_admin;
-        $admin = $request->admin;
-        $receptionist = $request->receptionist;
-        $stokManager = $request->store_manager;
+        $superAdmin       = $request->super_admin;
+        $admin            = $request->admin;
+        $receptionist     = $request->receptionist;
+        $stokManager      = $request->store_manager;
         $financialManager = $request->financial_manager;
-        $housekeeper = $request->housekeeper;
+        $housekeeper      = $request->housekeeper;
         foreach($ids as $key => $id){ 
             $superAdminP = 1; //not change superadmin, so set default 1
             $adminP = $recP = $smP = $fmP = $hkP = 0;
@@ -1589,12 +1722,12 @@ class AdminController extends Controller
             if(isset($financialManager[$id])) $fmP = 1;
             if(isset($housekeeper[$id])) $hkP = 1;
             $res = Permission::where('id',$id)->update([
-                "super_admin"=>$superAdminP,
-                'admin'=>$adminP,
-                'receptionist'=>$recP,
-                'store_manager'=>$smP,
-                'financial_manager'=>$fmP,
-                'housekeeper'=>$hkP
+                "super_admin"       => $superAdminP,
+                'admin'             => $adminP,
+                'receptionist'      => $recP,
+                'store_manager'     => $smP,
+                'financial_manager' => $fmP,
+                'housekeeper'       => $hkP
             ]);
         }
         if($res){            
@@ -1605,7 +1738,7 @@ class AdminController extends Controller
     /* ***** End Permissions Functions ***** */
 
     public function deleteMediaFile(Request $request) {
-        $row_data= MediaFile::whereId($request->id)->first();
+        $row_data = MediaFile::whereId($request->id)->first();
         if(MediaFile::whereId($request->id)->delete()){
             unlinkImg($row_data->file,'uploads/'.$row_data->type.'/');
             return redirect()->back()->with(['success' => config('constants.FLASH_REC_DELETE_1')]);
@@ -1615,13 +1748,13 @@ class AdminController extends Controller
 
     /* ***** Start Dynamic Dropdowns Functions ***** */
     public function listDynamicDropdowns() {
-        $dynamicDropdowns=DynamicDropdown::where('status', 1)->where('is_deleted', 0)->orderBy('dropdown_name','ASC')->orderBy('is_deletable','ASC')->get();
+        $dynamicDropdowns = DynamicDropdown::where('status', 1)->where('is_deleted', 0)->orderBy('dropdown_name','ASC')->orderBy('is_deletable','ASC')->get();
         $datalist = [];
         foreach ($dynamicDropdowns as $key => $value) {
             if(isset($datalist[$value->dropdown_name])){
                 $datalist[$value->dropdown_name]['values'][] = $value;
             } else {
-                $datalist[$value->dropdown_name] = ['dropdown_name'=>$value->dropdown_name, 'title'=>lang_trans('txt_dropdown_'.$value->dropdown_name), 'values'=>[$value]];
+                $datalist[$value->dropdown_name] = ['dropdown_name' => $value->dropdown_name, 'title' => lang_trans('txt_dropdown_' . $value->dropdown_name), 'values' => [$value]];
             }
         }
         $this->data['datalist'] = $datalist;
@@ -1633,7 +1766,7 @@ class AdminController extends Controller
             return redirect()->back()->with(['info' => config('constants.FLASH_NOT_ALLOW_FOR_DEMO')]);
         }  
        $res = null; 
-       //dd($request->all());
+       // dd($request->all());
        foreach($request->all() as $dropdownName => $dropdownValues){
             $ids = []; 
             if(is_array($dropdownValues)){
@@ -1694,13 +1827,13 @@ class AdminController extends Controller
                 // get datewise price list
                 $priceInfo = getRoomsWithPrice([ 'checkin_date' => $request->check_in_date, 'checkout_date' => $request->check_out_date, 'room_type_ids' => [$exp[0]] ]);
                 $roomData[] = [
-                    'reservation_id' => $reservationData->id,
-                    'room_type_id' => $exp[0],
-                    'room_id' => $exp[1],
-                    'room_price' => $roomTypeDetails->base_price,
-                    'room_price' => $roomTypeDetails->base_price,
-                    'check_in' => dateConvert($request->check_in_date, 'Y-m-d H:i'),
-                    'check_out' => dateConvert($request->check_out_date, 'Y-m-d H:i'),
+                    'reservation_id'  => $reservationData->id,
+                    'room_type_id'    => $exp[0],
+                    'room_id'         => $exp[1],
+                    'room_price'      => $roomTypeDetails->base_price,
+                    'room_price'      => $roomTypeDetails->base_price,
+                    'check_in'        => dateConvert($request->check_in_date, 'Y-m-d H:i:s'),
+                    'check_out'       => dateConvert($request->check_out_date, 'Y-m-d H:i:s'),
                     'date_wise_price' => json_encode($priceInfo[$exp[0]]['dates_with_price'])
                 ];
             }
@@ -1715,7 +1848,7 @@ class AdminController extends Controller
                 if($val->is_checkout == 0){
                     $roomData = [
                         'is_checkout' => 1,
-                        'check_out' => dateConvert($request->check_out_date, 'Y-m-d H:i'),
+                        'check_out'   => dateConvert($request->check_out_date, 'Y-m-d H:i:s'),
                     ];
                     BookedRoom::where('id', $val->id)->update($roomData);
                 }

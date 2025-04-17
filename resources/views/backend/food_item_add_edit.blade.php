@@ -4,8 +4,8 @@
     $flag = 0;
     $heading = lang_trans('btn_add');
     if(isset($data_row) && !empty($data_row)){
-        $flag=1;
-        $heading=lang_trans('btn_update');
+        $flag = 1;
+        $heading = lang_trans('btn_update');
     }
   @endphp
 <div class="">
@@ -25,10 +25,9 @@
                     @else
                         {{ Form::open(['url' => route('save-food-item'), 'id' => "food-item-form", 'class' => "form-horizontal form-label-left"]) }}
                     @endif
-
                     {{-- Category Dropdown --}}
                     <div class="form-group">
-                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="category_id">{{ lang_trans('txt_parent_category') }} <span class="required">*</span></label>
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="category_id">{{ lang_trans('txt_categories') }} <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <select name="category_id" id="category_id" class="form-control">
                                 <option value="0">None</option>
@@ -58,7 +57,7 @@
 
                     {{-- Price --}}
                     <div class="form-group">
-                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price">{{ lang_trans('txt_price') }} <span class="required">*</span></label>
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price">{{ lang_trans('txt_price') }} </label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             {{ Form::text('price', null, ['class' => "form-control col-md-7 col-xs-12", 'id' => "price", 'required' => 'required']) }}
                             @if ($errors->has('price'))
@@ -74,6 +73,17 @@
                             {{ Form::textarea('description', null, ['class' => "form-control col-md-7 col-xs-12", 'id' => "description", 'rows' => 1]) }}
                             @if ($errors->has('description'))
                                 <div class="error text-danger">{{ $errors->first('description') }}</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Food Type --}}
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ lang_trans('txt_type') }}</label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            {{ Form::select('type', config('constants.LIST_TYPE'), 1, ['class' => 'form-control']) }}
+                            @if ($errors->has('type'))
+                                <div class="error text-danger">{{ $errors->first('type') }}</div>
                             @endif
                         </div>
                     </div>

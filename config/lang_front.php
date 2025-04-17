@@ -74,6 +74,10 @@ return [
             'en'=>'All FoodCategory',
             'hi'=>'सभी खाद्य श्रेणी',
         ],
+        'sidemenu_fooditem_name'=>[
+            'en'=>'Food Item Name',
+            'hi'=>'खाद्य पदार्थ का नाम',
+        ],
         'sidemenu_fooditem_add'=>[
             'en'=>'Add Food Item',
             'hi'=>'खाद्य पदार्थ जोड़ें',
@@ -120,12 +124,12 @@ return [
             'hi'=>'स्थानों',
         ],
         'sidemenu_room_add'=>[
-            'en'=>'Add Venue',
+            'en'=>'Add Room',
             'hi'=>'स्थानों जोड़ें',
         ],
         'sidemenu_room_all'=>[
             'en'=>'All Venues',
-            'hi'=>'सभी स्थानों',
+            'hi'=>'सभी कमरे',
         ],
         'sidemenu_amenities'=>[
             'en'=>'Amenities',
@@ -154,6 +158,10 @@ return [
         'sidemenu_expensecat_add'=>[
             'en'=>'Add Category',
             'hi'=>'श्रेणी जोड़े',
+        ],
+        'sidemenu_select_category'=>[
+            'en'=>'Select Category',
+            'hi'=>'श्रेणी चुनें',
         ],
         'sidemenu_expensecat_all'=>[
             'en'=>'All Category',
@@ -221,6 +229,10 @@ return [
         'heading_default_settings'=>[
             'en'=>'Default Settings',
             'hi'=>'डिफ़ॉल्ट सेटिंग्स',
+        ],
+        'heading_food'=>[
+            'en'=>'Food',
+            'hi'=>'खाद्य',
         ],
         'heading_food_category'=>[
             'en'=>'Food Category',
@@ -306,6 +318,10 @@ return [
             'en'=>'ID Card Information',
             'hi'=>'आईडी कार्ड की जानकारी',
         ],
+        'heading_special_requirement'=>[
+            'en'=>'Special Requirement',
+            'hi'=>'विशेष आवश्यकता',
+        ],
         'heading_person_info'=>[
             'en'=>'Information of Other Person',
             'hi'=>'अन्य व्यक्ति की जानकारी',
@@ -385,6 +401,10 @@ return [
             'en'=>'Repeat Order',
             'hi'=>'दुबारा ऑर्डर',
         ],
+        'btn_view_food'=>[
+            'en'=>'View Food',
+            'hi'=>'भोजन देखें',
+        ],
         'btn_view_order'=>[
             'en'=>'View Order',
             'hi'=>'ऑर्डर देखें',
@@ -413,6 +433,10 @@ return [
             'en'=>'Cancel',
             'hi'=>'रद्द',
         ],
+        'btn_cancel_order'=>[
+            'en'=>'Cancel Order',
+            'hi'=>'ऑर्डर रद्द करें',
+        ],
         'btn_delete'=>[
             'en'=>'Delete',
             'hi'=>'हटाएं',
@@ -424,6 +448,10 @@ return [
         'btn_print'=>[
             'en'=>'Print',
             'hi'=>'छाप',
+        ],
+        'btn_edit'=>[
+            'en'=>'Edit',
+            'hi'=>'संपादित करें',
         ],
         'btn_go_back'=>[
             'en'=>'Go To Back',
@@ -444,6 +472,10 @@ return [
         'btn_view_item'=>[
             'en'=>'View Items',
             'hi'=>'आइटम देखें',
+        ],
+        'btn_view_detail'=>[
+            'en'=>'View Details',
+            'hi'=>'विवरण देखें',
         ],
         'btn_view'=>[
             'en'=>'View',
@@ -603,6 +635,10 @@ return [
             'en'=>'Room No.',
             'hi'=>'कमरा क्रमांक।',
         ],
+        'txt_hall_num'=>[
+            'en'=>'Hall No.',
+            'hi'=>'हॉल संख्या',
+        ],
         'txt_order_amount'=>[
             'en'=>'Order Amount',
             'hi'=>'ऑर्डर करने की राशि',
@@ -618,6 +654,26 @@ return [
         'txt_datetime'=>[
             'en'=>'Datetime',
             'hi'=>'दिनांक और समय',
+        ],
+        'txt_no_of_items'=>[
+            'en'=>'No Of Items',
+            'hi'=>'वस्तुओं की संख्या',
+        ],
+        'txt_price_per_plate'=>[
+            'en'=>'Price Per Plate',
+            'hi'=>'मूल्य प्रति प्लेट',
+        ],
+        'txt_no_of_guest'=>[
+            'en'=>'No Of Guest',
+            'hi'=>'अतिथि की संख्या',
+        ],
+        'txt_no_food_orders'=>[
+            'en'=>'No food orders found for this reservation.',
+            'hi'=>'इस आरक्षण के लिए कोई खाद्य ऑर्डर नहीं मिला.',
+        ],
+        'txt_order_food_item'=>[
+            'en'=>'Order Food Items',
+            'hi'=>'खाद्य पदार्थ ऑर्डर करें',
         ],
         'txt_orderitem_qty'=>[
             'en'=>'Order Items & Quantity',
@@ -718,6 +774,10 @@ return [
         'txt_category_name'=>[
             'en'=>'Category Name',
             'hi'=>'श्रेणी नाम',
+        ],
+        'txt_categories'=>[
+            'en'=>'Categories',
+            'hi'=>'श्रेणियाँ',
         ],
         'txt_sub_category_name'=>[
             'en'=>'Sub Category Name',
@@ -851,9 +911,17 @@ return [
             'en'=>'Subtotal',
             'hi'=>'उपयोग',
         ],
+        'txt_total_per_plate_cost'=>[
+            'en'=>'Total Per Plate Cost',
+            'hi'=>'कुल प्रति प्लेट लागत',
+        ],
         'txt_total'=>[
             'en'=>'Total',
             'hi'=>'संपूर्ण',
+        ],
+        'txt_food_total'=>[
+            'en'=>'Food Total',
+            'hi'=>'भोजन कुल',
         ],
         'txt_grand_total'=>[
             'en'=>'Grand Total',
@@ -1079,9 +1147,17 @@ return [
             'en'=>'Event Type',
             'hi'=>'इवेंट प्रकार',
         ],
+        'txt_sl_no'=>[
+            'en'=>'No.',
+            'hi'=>'संख्या',
+        ],
         'txt_time_slot'=>[
             'en'=>'Time Slot',
             'hi'=>'समय स्लॉट',
+        ],
+        'txt_select_time'=>[
+            'en'=>'Select Time',
+            'hi'=>'समय चुनें',
         ],
         'txt_booked_by'=>[
             'en'=>'Booked By',
@@ -1121,7 +1197,7 @@ return [
         ],
         'txt_room_type'=>[
             'en'=>'Room Type',
-            'hi'=>'कक्ष के प्रकार',
+            'hi'=>'कमरे का प्रकार',
         ],
         'txt_duration_of_stay'=>[
             'en'=>'Duration of Stay',
@@ -1187,6 +1263,10 @@ return [
             'en'=>'Advance Amount',
             'hi'=>'अग्रिम राशि',
         ],
+        'txt_balance_due'=>[
+            'en'=>'Balance Due',
+            'hi'=>'बकाया शेष राशि',
+        ],
         'txt_base_price'=>[
             'en'=>'Base Price',
             'hi'=>'आधार मूल्य',
@@ -1226,6 +1306,14 @@ return [
         'txt_persons'=>[
             'en'=>'Person`s',
             'hi'=>'व्यक्ति',
+        ],
+        'txt_booked_on_date'=>[
+            'en'=>'Booked On',
+            'hi'=>'बुक की गई तिथि',
+        ],
+        'txt_closed_on_date'=>[
+            'en'=>'Closed On',
+            'hi'=>'चेक-आउट फॉर्म की तारीख',
         ],
         'txt_checkin_from_date'=>[
             'en'=>'Check In Form Date',
@@ -1326,8 +1414,16 @@ return [
             'hi'=>'बच्चों की क्षमता',
         ],
         'txt_capacity'=>[
+            'en'=>'Capacity',
+            'hi'=>'क्षमता',
+        ],
+        'txt_max_capacity'=>[
             'en'=>'Max Capacity',
             'hi'=>'अधिकतम क्षमता',
+        ],
+        'txt_max'=>[
+            'en'=>'Max',
+            'hi'=>'अधिकतम',
         ],
         'txt_by'=>[
             'en'=>'By',
@@ -1392,6 +1488,10 @@ return [
         'txt_heading_booked_rooms'=>[
             'en'=>'Booked Rooms',
             'hi'=>'बुक किए गए कमरे',
+        ],
+        'txt_download'=>[
+            'en'=>'Download',
+            'hi'=>'डाउनलोड करें',
         ],
         'txt_dropdown_values'=>[
             'en'=>'Dropdown Values',

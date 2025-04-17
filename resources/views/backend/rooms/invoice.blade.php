@@ -194,7 +194,7 @@
                     <tr>
                         <th class="text-center" width="5%">{{lang_trans('txt_sno')}}.</th>
                         <th class="text-center" width="10%">HSN/SAC</th>
-                        <th class="text-center" width="30%">Room Name/No.</th>
+                        <th class="text-center" width="30%">Venue Name/No.</th>
                         <th class="text-center" width="10%">Total Days</th>
                         {{-- <th class="text-center" width="10%">Room Rent ({{getCurrencySymbol()}})</th> --}}
                         <th>&nbsp;</th>
@@ -203,14 +203,14 @@
                 </thead>
                 <tbody>
                     @if($data_row->booked_rooms) 
-                        @foreach($data_row->booked_rooms as $key=>$roomInfo)
+                        @foreach($data_row->booked_rooms as $key => $roomInfo)
                             @php
-                              $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
-                              $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
-                              $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days');
-                              // $amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
-                              $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
-                              $amountPerRoom = $priceInfo[1];
+                                $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
+                                $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
+                                $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
+                                // $amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
+                                $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
+                                $amountPerRoom = $priceInfo[1];
                             @endphp
                             <tr>
                               <td class="text-center">{{$key+1}}</td>
@@ -313,7 +313,7 @@
                     </tr>
                     <tr>
                         <th class="text-center" colspan="6">
-                                Thank you for staying with us.
+                            Thank you for staying with us.
                         </th>
                     </tr>
                 </tbody>
@@ -328,59 +328,56 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th class="text-center" width="2%">{{lang_trans('txt_sno')}}.</th>
-                        <th class="text-center" width="20%">Item Details</th>
-                        <th class="text-center" width="5%">HSN/SAC</th>
-                        <th class="text-center" width="5%">Date</th>
-                        <th class="text-center" width="5%">Item Qty</th>
-                        <th class="text-center" width="5%">Item Price ({{getCurrencySymbol()}})</th>
-                        <th class="text-center" width="10%">Amount ({{getCurrencySymbol()}})</th>
+                        <th class="text-center">{{lang_trans('txt_sno')}}.</th>
+                        <th class="text-center">Item Details</th>
+                        <th class="text-center">Item Category</th>
+                        <th class="text-center">HSN/SAC</th>
+                        <th class="text-center">Date</th>
+                        <th class="text-center">Item Price ({{getCurrencySymbol()}})</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($data_row->orders_items as $k=>$val)
+                    @forelse($data_row->orders_items as $k => $val)
                       @php
                         $totalOrdersAmount = $totalOrdersAmount + ($val->item_qty*$val->item_price);
                       @endphp
                         <tr>
                             <td class="text-center">{{$k+1}}</td>
-                            <td class="">{{$val->item_name}}</td>
+                            <td>{{$val->item_name}}</td>
+                            <td>{{ $val->json_data['category_name'] ?? 'N/A' }}</td>
                             <td class="text-center">9963</td>
                             <td class="text-center">{{dateConvert($val->check_out,'d-m-Y')}}</td>
-                            <td class="text-center">{{$val->item_qty}}</td>
                             <td class="text-center">{{numberFormat($val->item_price)}}</td>
-                            <td class="text-center">{{numberFormat($val->item_qty*$val->item_price)}}</td>
                         </tr>
                     @empty
                     <tr>
-                        <td colspan="7">No Orders</td>
+                        <td colspan="6">No Orders</td>
                     </tr>
                     @endforelse
                     <tr>
-                        <th class="text-right" colspan="6">Total</th>
+                        <th class="text-right" colspan="5">Total</th>
                         <td class="text-right">{{ numberFormat($totalOrdersAmount) }}</td>
                     </tr>
                     @if($foodAmountGst>0)
                     <tr>
-                        <th class="text-right" colspan="6">GST ({{$gstPercFood}} %)</th>
+                        <th class="text-right" colspan="5">GST ({{$gstPercFood}} %)</th>
                         <td class="text-right">{{ numberFormat($foodAmountGst) }}</td>
                     </tr>
                     @endif
                         @if($foodAmountCGst>0)
                     <tr>
-                        <th class="text-right" colspan="6">CGST ({{$cgstPercFood}} %)</th>
+                        <th class="text-right" colspan="5">CGST ({{$cgstPercFood}} %)</th>
                         <td class="text-right">{{ numberFormat($foodAmountCGst) }}</td>
                     </tr>
                     @endif
-                    
                     @if($foodOrderAmountDiscount>0)
                         <tr>
-                            <th class="text-right" colspan="6">Discount</th>
+                            <th class="text-right" colspan="5">Discount</th>
                             <td class="text-right">{{ numberFormat($foodOrderAmountDiscount) }}</td>
                         </tr>
                     @endif
                     <tr>
-                        <th class="text-right" colspan="6">Grand Total</th>
+                        <th class="text-right" colspan="5">Grand Total</th>
                         <td class="text-right">{{ numberFormat($finalOrderAmount) }}</td>
                     </tr>
                     <tr>
@@ -440,7 +437,7 @@
         </div>
     </div>
     <div>
-        {!!$settings['invoice_term_condition']!!}
+        {!! $settings['invoice_term_condition'] !!}
     </div>
 @endif
 <div class="col-sm-12 text-center no-print">

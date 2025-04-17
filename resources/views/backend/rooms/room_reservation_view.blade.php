@@ -1,24 +1,28 @@
 @extends('layouts.master_backend')
 @section('content')
 @php 
-  $calculatedAmount = calcFinalAmount($data_row, 0);
-  $totalRoomAmount = $calculatedAmount['subtotalRoomAmount'];
-  $advancePayment = $calculatedAmount['advancePayment'];
-  $roomAmountDiscount = $calculatedAmount['totalRoomAmountDiscount'];
-  $roomAmountGst = $calculatedAmount['totalRoomAmountGst'];
-  $roomAmountCGst = $calculatedAmount['totalRoomAmountCGst'];
-  $finalRoomAmount = $calculatedAmount['finalRoomAmount'];
+  $calculatedAmount         = calcFinalAmount($data_row, 0);
+  $totalRoomAmount          = $calculatedAmount['subtotalRoomAmount'];
+  $advancePayment           = $calculatedAmount['advancePayment'];
+  
+  $roomAmountDiscount       = $calculatedAmount['totalRoomAmountDiscount'];
+  $roomAmountGst            = $calculatedAmount['totalRoomAmountGst'];
+  $roomAmountCGst           = $calculatedAmount['totalRoomAmountCGst'];
+  $finalRoomAmount          = $calculatedAmount['finalRoomAmount'];
 
-  $totalOrderAmountGst = $calculatedAmount['totalOrderAmountGst'];
-  $totalOrderAmountCGst = $calculatedAmount['totalOrderAmountCGst'];
+  $totalOrderAmountGst      = $calculatedAmount['totalOrderAmountGst'];
+  $totalOrderAmountCGst     = $calculatedAmount['totalOrderAmountCGst'];
   $totalOrderAmountDiscount = $calculatedAmount['totalOrderAmountDiscount'];
-  $orderGst = $calculatedAmount['totalOrderGstPerc'];
-  $orderCGst = $calculatedAmount['totalOrderCGstPerc'];
-  $totalOrdersAmount = $calculatedAmount['subtotalOrderAmount'];
-  $finalOrderAmount = $calculatedAmount['finalOrderAmount'];
+  $orderGst                 = $calculatedAmount['totalOrderGstPerc'];
+  $orderCGst                = $calculatedAmount['totalOrderCGstPerc'];
+  $totalOrdersAmount        = $calculatedAmount['subtotalOrderAmount'];
+  $finalOrderAmount         = $calculatedAmount['finalOrderAmount'];
 
-  $additionalAmount = $calculatedAmount['additionalAmount'];
-  $additionalAmountReason = $data_row->additional_amount_reason;
+  $additionalAmount         = $calculatedAmount['additionalAmount'];
+  $additionalAmountReason   = $data_row->additional_amount_reason;
+
+  $grandTotal               = $finalRoomAmount + $finalOrderAmount + $additionalAmount;
+  $balanceDue               = $grandTotal - $advancePayment;
 @endphp
 <div class="">
       <div class="row" id="new_guest_section">
@@ -31,33 +35,32 @@
               <div class="x_content"> 
                 <div class="row"> 
                   <div class="col-md-12 col-sm-12 col-xs-12">
-                        <table class="table table-bordered">
-                            <tr>
-                              <th>{{lang_trans('txt_fullname')}}</th>
-                              <td>{{($data_row->customer) ? $data_row->customer->name : ''}}</td>
-                              <th>{{lang_trans('txt_father_name')}}</th>
-                              <td>{{($data_row->customer) ? $data_row->customer->father_name : ''}}</td>
-                            </tr>
-                            <tr>
-                              <th>{{lang_trans('txt_email')}}</th>
-                              <td>{{($data_row->customer) ? $data_row->customer->email : ''}}</td>
-                              <th>{{lang_trans('txt_mobile_num')}}</th>
-                              <td>{{($data_row->customer) ? $data_row->customer->mobile : ''}}</td>
-                            </tr>
-                            <tr>
-                              <th>{{lang_trans('txt_gender')}}</th>
-                              <td>{{($data_row->customer) ? $data_row->customer->gender : ''}}</td>
-                              <th>{{lang_trans('txt_age')}}</th>
-                              <td>{{($data_row->customer) ? $data_row->customer->age : ''}} {{lang_trans('txt_years')}}</td>
-                            </tr>
-                            <tr>
-                              <th>{{lang_trans('txt_address')}}</th>
-                              <td colspan="3">{{($data_row->customer) ? $data_row->customer->address : ''}}, {{($data_row->customer) ? $data_row->customer->city : ''}}, {{($data_row->customer) ? $data_row->customer->state : ''}}, {{($data_row->customer) ? $data_row->customer->country : ''}}</td>
-                            </tr>
-                          
-                          </tbody>
-                        </table>
-                      </div>
+                      <table class="table table-bordered">
+                          <tr>
+                            <th>{{lang_trans('txt_fullname')}}</th>
+                            <td>{{($data_row->customer) ? $data_row->customer->name : ''}}</td>
+                            <th>{{lang_trans('txt_father_name')}}</th>
+                            <td>{{($data_row->customer) ? $data_row->customer->father_name : ''}}</td>
+                          </tr>
+                          <tr>
+                            <th>{{lang_trans('txt_email')}}</th>
+                            <td>{{($data_row->customer) ? $data_row->customer->email : ''}}</td>
+                            <th>{{lang_trans('txt_mobile_num')}}</th>
+                            <td>{{($data_row->customer) ? $data_row->customer->mobile : ''}}</td>
+                          </tr>
+                          <tr>
+                            <th>{{lang_trans('txt_gender')}}</th>
+                            <td>{{($data_row->customer) ? $data_row->customer->gender : ''}}</td>
+                            <th>{{lang_trans('txt_age')}}</th>
+                            <td>{{($data_row->customer) ? $data_row->customer->age : ''}} {{lang_trans('txt_years')}}</td>
+                          </tr>
+                          <tr>
+                            <th>{{lang_trans('txt_address')}}</th>
+                            <td colspan="3">{{($data_row->customer) ? $data_row->customer->address : ''}}, {{($data_row->customer) ? $data_row->customer->city : ''}}, {{($data_row->customer) ? $data_row->customer->state : ''}}, {{($data_row->customer) ? $data_row->customer->country : ''}}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                 </div>
               </div>
           </div>
@@ -79,19 +82,19 @@
                               <th>{{lang_trans('btn_checkin')}}</th>
                               <td>{{dateConvert($data_row->check_in,'d-m-Y H:i')}}</td>
                               <th>{{lang_trans('btn_checkout')}}</th>
-                              <td>{{ dateConvert($data_row->check_out,'d-m-Y H:i')}}</td>
+                              <td>{{ dateConvert($data_row->check_out,'d-m-Y H:i') }}</td>
                             </tr>
                             <tr>
-                              <th>{{lang_trans('txt_checkin_from_date')}}</th>
+                              <th>{{lang_trans('txt_booked_on_date')}}</th>
                               <td>{{ ($data_row->created_at_checkin!=null) ? dateConvert($data_row->created_at_checkin,'d-m-Y H:i') : 'NA'}}</td>
-                              <th>{{lang_trans('txt_checkout_from_date')}}</th>
+                              <th>{{lang_trans('txt_closed_on_date')}}</th>
                               <td>{{ ($data_row->created_at_checkout!=null) ? dateConvert($data_row->created_at_checkout,'d-m-Y H:i') : 'NA'}}</td>
                             </tr>
                             <tr>
-                              <th>{{lang_trans('txt_duration_of_stay')}}</th>
+                              <th>{{lang_trans('txt_duration')}}</th>
                               <td>{{$data_row->duration_of_stay}}</td>
                               <th>{{lang_trans('txt_persons')}}</th>
-                              <td><b>{{lang_trans('txt_adults')}}:</b> {{$data_row->adult}} <b>{{lang_trans('txt_kids')}}:</b> {{$data_row->kids}}</td>
+                              <td><b>{{lang_trans('txt_adults')}}:</b> {{$data_row->adult}}</td>
                             </tr>
                             <tr>
                               <th>{{lang_trans('txt_idcard_type')}}</th>
@@ -124,8 +127,8 @@
                               <td>{{$data_row->room_plan}}</td>
                             </tr>
                             <tr>
-                              <th>{{lang_trans('txt_reason_of_visit')}}</th>
-                              <td colspan="3">{{$data_row->reason_visit_stay}}</td>
+                              <th>{{lang_trans('txt_event_type')}}</th>
+                              <td colspan="3">{{$data_row->event_type}}</td>
                             </tr>
                              <tr>
                               <th>{{lang_trans('txt_remark_amount')}}</th>
@@ -254,20 +257,18 @@
                             <tr>
                               <th class="text-center" width="2%">{{lang_trans('txt_sno')}}.</th>
                               <th class="text-center" width="20%">{{lang_trans('txt_room')}}</th>
-                              <th class="text-center" width="5%">{{lang_trans('txt_duration_of_stay')}}</th>
+                              <th class="text-center" width="5%">{{lang_trans('txt_duration')}}</th>
                               <th class="text-center" width="5%">{{lang_trans('txt_base_price')}}</th>
                               <th class="text-center" width="10%">{{lang_trans('txt_total_amount')}}</th>
                             </tr>
                           </thead>
                           <tbody>
                              @if($data_row->booked_rooms) 
-                              @foreach($data_row->booked_rooms as $key=>$roomInfo)
+                              @foreach($data_row->booked_rooms as $key => $roomInfo)
                                 @php
                                   $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
                                   $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
-                                  $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days');
-                                  // $amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
-                                  //$totalRoomAmount = $totalRoomAmount+$amountPerRoom;
+                                  $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
                                   $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
                                   $amountPerRoom = $priceInfo[1];
                                 @endphp
@@ -281,7 +282,6 @@
                                     <span class="duration_of_per_room {{ ($roomInfo->swapped_from_room) ? 'swapped_room' : 'no_swapped_room'}}">{{$durOfStayPerRoom}}</span>
                                   </th>
                                   <td class="text-center">
-                                    {{-- {{getCurrencySymbol()}} {{$roomInfo->room_price}} --}}
                                     <button type="button" class="btn btn-xs btn-info cursor-pointer" data-toggle="modal" data-target="#room_price_model_{{$key}}">{{lang_trans('btn_price_break')}}</button>
                                     @include('backend/model/room_price_info_model',['list'=>$priceInfo[0], 'total'=>$priceInfo[1], 'key'=>$key])
                                   </td>
@@ -293,31 +293,32 @@
                         </table>
                         
                         <table class="table table-bordered">
-                              <tr>
-                                <th class="text-right">{{lang_trans('txt_subtotal')}}</th>
-                                <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalRoomAmount) }}</td>
-                              </tr>
-                              <tr>
-                                <th class="text-right">{{lang_trans('txt_sgst')}} ({{$data_row->gst_perc}}%)</th>
-                                <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($roomAmountGst) }}</td>
-                              </tr>
-                              <tr class="{{$data_row->cgst_perc > 0 ? '' : 'hide_elem'}}">
-                                <th class="text-right">{{lang_trans('txt_cgst')}} ({{$data_row->cgst_perc}}%)</th>
-                                <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($roomAmountCGst) }}</td>
-                              </tr>
-                               <tr>
-                                <th class="text-right">{{lang_trans('txt_advance_amount')}}</th>
-                                <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($advancePayment) }}</td>
-                              </tr>
-                              <tr>
-                                <th class="text-right">{{lang_trans('txt_discount')}}</th>
-                                <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($roomAmountDiscount) }}</td>
-                              </tr>
-                              <tr class="bg-success">
-                                <th class="text-right">{{lang_trans('txt_final_amount')}}</th>
-                                <td width="15%" id="td_final_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($finalRoomAmount) }}</td>
-                              </tr>
+                          <tr>
+                            <th class="text-right">{{lang_trans('txt_subtotal')}}</th>
+                            <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalRoomAmount) }}</td>
+                          </tr>
+                          <tr>
+                            <th class="text-right">{{lang_trans('txt_sgst')}} ({{$data_row->gst_perc}}%)</th>
+                            <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($roomAmountGst) }}</td>
+                          </tr>
+                          <tr class="{{$data_row->cgst_perc > 0 ? '' : 'hide_elem'}}">
+                            <th class="text-right">{{lang_trans('txt_cgst')}} ({{$data_row->cgst_perc}}%)</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($roomAmountCGst) }}</td>
+                          </tr>
+                          {{-- <tr>
+                            <th class="text-right">{{lang_trans('txt_advance_amount')}}</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($advancePayment) }}</td>
+                          </tr> --}}
+                          <tr>
+                            <th class="text-right">{{lang_trans('txt_discount')}}</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($roomAmountDiscount) }}</td>
+                          </tr>
+                          <tr class="bg-success">
+                            <th class="text-right">{{lang_trans('txt_final_amount')}}</th>
+                            <td width="15%" id="td_final_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($finalRoomAmount) }}</td>
+                          </tr>
                         </table>
+                        
                         <div class="x_title">
                             <h2>{{lang_trans('txt_food_orders')}}</h2>
                             <div class="clearfix"></div>
@@ -326,52 +327,93 @@
                           <thead>
                             <tr>
                               <th width="2%">{{lang_trans('txt_sno')}}.</th>
+                              <th width="20%">{{lang_trans('txt_category')}}</th>
                               <th width="20%">{{lang_trans('txt_item_details')}}</th>
                               <th width="5%">{{lang_trans('txt_date')}}</th>
-                              <th width="5%">{{lang_trans('txt_item_qty')}}</th>
                               <th width="5%">{{lang_trans('txt_item_price')}}</th>
-                              <th width="10%">{{lang_trans('txt_total_amount')}}</th>
                             </tr>
                             </thead>
                             <tbody>
-                            @forelse($data_row->orders_items as $k=>$val)
+                            @forelse($data_row->orders_items as $k => $val)
                               <tr>
-                                <td>{{$k+1}}</td>
-                                <td>{{$val->item_name}}</td>
-                                <td>{{dateConvert($val->created_at,'d-m-Y')}}</td>
-                                <td>{{$val->item_qty}}</td>
-                                <td>{{getCurrencySymbol()}} {{$val->item_price}}</td>
-                                <td>{{getCurrencySymbol()}} {{$val->item_qty*$val->item_price}}</td>
+                                <td>{{ $k+1 }}</td>
+                                <td>{{ $val->json_data['category_name'] ?? 'N/A' }}</td>
+                                <td>{{ $val->item_name }}</td>
+                                <td>{{ dateConvert($val->created_at,'d-m-Y') }}</td>
+                                <td>{{ getCurrencySymbol() }} {{ $val->item_price }}</td>
                               </tr>
                             @empty
                               <tr>
-                                <td colspan="6">{{lang_trans('txt_no_orders')}}</td>
+                                <td colspan="6">{{ lang_trans('txt_no_orders') }}</td>
                               </tr>
                             @endforelse
                           </tbody>
                         </table>
+
+                        {{-- Extra Tables Starts Here --}}
+                        <table class="table table-bordered">
+                          <thead>
+                            <tr>
+                              <th width="20%">{{ lang_trans('txt_no_of_items') }}</th>
+                              <th width="20%">{{ lang_trans('txt_price_per_plate') }}</th>
+                              <th width="5%">{{ lang_trans('txt_no_of_guest') }}</th>
+                              <th width="5%">{{ lang_trans('txt_subtotal') }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @php
+                              $totalItems = 0;
+                              $totalGuests = 0;
+                              $totalPrice = 0;
+                              $categories = [];
+                            @endphp
+
+                            @foreach($data_row->orders_items as $val)
+                              @php
+                                $totalItems++;
+                                $totalGuests = $data_row->adult;
+                                $totalPrice += $val->item_price;
+                                $categories[] = $val->json_data['category_name'] ?? 'N/A';
+                              @endphp
+                            @endforeach
+
+                            @if($totalItems > 0)
+                              <tr>
+                                <td>{{ $totalItems }}</td>
+                                <td>{{ getCurrencySymbol() }} {{ number_format($totalPrice / max(1, $totalItems), 2) }}</td>
+                                <td>{{ $totalGuests }}</td>
+                                <td>{{ getCurrencySymbol() }} {{ number_format($totalPrice, 2) }}</td>
+                              </tr>
+                            @else
+                              <tr>
+                                <td colspan="4">{{ lang_trans('txt_no_orders') }}</td>
+                              </tr>
+                            @endif
+                          </tbody>
+                        </table>
+                        {{-- Extra Tables Ends Here --}}
                         
                         <table class="table table-bordered">
-                                    <tr>
-                                      <th class="text-right">{{lang_trans('txt_subtotal')}}</th>
-                                      <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrdersAmount) }}</td>
-                                    </tr>
-                                    <tr>
-                                      <th class="text-right">{{lang_trans('txt_sgst')}} ({{$orderGst}}%)</th>
-                                      <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrderAmountGst) }}</td>
-                                    </tr>
-                                    <tr class="{{$orderCGst > 0 ? '' : 'hide_elem'}}">
-                                      <th class="text-right">{{lang_trans('txt_cgst')}} ({{$orderCGst}}%)</th>
-                                      <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrderAmountCGst) }}</td>
-                                    </tr>
-                                    <tr>
-                                      <th class="text-right">{{lang_trans('txt_discount')}}</th>
-                                      <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrderAmountDiscount)}}</td>
-                                    </tr>
-                                    <tr class="bg-success">
-                                      <th class="text-right">{{lang_trans('txt_final_amount')}}</th>
-                                      <td width="15%" id="td_final_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($finalOrderAmount) }}</td>
-                                    </tr>
+                          <tr>
+                            <th class="text-right">{{lang_trans('txt_subtotal')}}</th>
+                            <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrdersAmount) }}</td>
+                          </tr>
+                          <tr>
+                            <th class="text-right">{{lang_trans('txt_sgst')}} ({{$orderGst}}%)</th>
+                            <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrderAmountGst) }}</td>
+                          </tr>
+                          <tr class="{{$orderCGst > 0 ? '' : 'hide_elem'}}">
+                            <th class="text-right">{{lang_trans('txt_cgst')}} ({{$orderCGst}}%)</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrderAmountCGst) }}</td>
+                          </tr>
+                          <tr>
+                            <th class="text-right">{{lang_trans('txt_discount')}}</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($totalOrderAmountDiscount)}}</td>
+                          </tr>
+                          <tr class="bg-success">
+                            <th class="text-right">{{lang_trans('txt_final_amount')}}</th>
+                            <td width="15%" id="td_final_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($finalOrderAmount) }}</td>
+                          </tr>
                         </table>
 
                         <table class="table table-bordered">
@@ -386,10 +428,24 @@
                         </table>
 
                         <table class="table table-bordered">
-                              <tr class="bg-warning">
-                                <th class="text-right">{{lang_trans('txt_grand_total')}}</th>
-                                <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($finalRoomAmount+$finalOrderAmount+$additionalAmount) }}</td>
-                              </tr>
+                          <tr class="bg-warning">
+                            <th class="text-right">{{lang_trans('txt_grand_total')}}</th>
+                            <td width="15%" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($grandTotal) }}</td>
+                          </tr>
+                        </table>
+
+                        <table class="table table-bordered">
+                          <tr class="bg-default">
+                            <th class="text-right">{{lang_trans('txt_advance_amount')}}</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($advancePayment) }}</td>
+                          </tr>
+                        </table>
+
+                        <table class="table table-bordered">
+                          <tr class="bg-danger">
+                            <th class="text-right">{{lang_trans('txt_balance_due')}}</th>
+                            <td width="15%" id="td_advance_amount" class="text-right">{{getCurrencySymbol()}} {{ numberFormat($balanceDue) }}</td>
+                          </tr>
                         </table>
                       </div>
                   </div>

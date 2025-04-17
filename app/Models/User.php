@@ -40,6 +40,7 @@ class User extends Authenticatable
     ];
 
     protected $with = ['user_role'];
+    
     function user_role(){
         return $this->hasOne('App\Models\Role','id','role_id');
     }

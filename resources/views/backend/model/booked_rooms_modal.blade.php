@@ -11,18 +11,17 @@
                 <tr>
                   <th class="text-center" width="2%">{{lang_trans('txt_sno')}}.</th>
                   <th class="text-center" width="10%">{{lang_trans('txt_room')}}</th>
-                  <th class="text-center" width="5%">{{lang_trans('txt_duration_of_stay')}}</th>
+                  <th class="text-center" width="5%">{{lang_trans('txt_duration')}}</th>
                   <th class="text-center" width="20%">{{lang_trans('txt_base_price')}}</th>
                 </tr>
               </thead>
               <tbody>
                 @if($val->booked_rooms) 
-                  @foreach($val->booked_rooms as $key=>$roomInfo)
+                  @foreach($val->booked_rooms as $key => $roomInfo)
                     @php
                       $checkIn = dateConvert($roomInfo->check_in, 'Y-m-d');
                       $checkOut = dateConvert($roomInfo->check_out, 'Y-m-d');
-                      $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days');
-                      //$amountPerRoom = ($durOfStayPerRoom * $roomInfo->room_price);
+                      $durOfStayPerRoom = dateDiff($checkIn, $checkOut, 'days') <= 0 ? "1 day" : dateDiff($checkIn, $checkOut, 'days') . " days";
                       $priceInfo = getDateWisePriceList($roomInfo->date_wise_price);
                       $amountPerRoom = $priceInfo[1];
                     @endphp

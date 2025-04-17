@@ -1,13 +1,13 @@
 @extends('layouts.master_backend')
 @section('content')
 @php 
-      $flag=0;
-      $heading=lang_trans('btn_add');
-      if(isset($data_row) && !empty($data_row)){
-          $flag=1;
-          $heading=lang_trans('btn_update');
-      }
-  @endphp
+    $flag = 0;
+    $heading = lang_trans('btn_add');
+    if(isset($data_row) && !empty($data_row)){
+        $flag = 1;
+        $heading = lang_trans('btn_update');
+    }
+@endphp
 <div class="">
   <div class="row">
       <div class="col-md-12 col-sm-12 col-xs-12">
@@ -27,7 +27,7 @@
                       <div class="form-group">
                           <label class="control-label col-md-3 col-sm-3 col-xs-12" for="room_type_id"> {{lang_trans('txt_room_type')}}<span class="required">*</span></label>
                           <div class="col-md-6 col-sm-6 col-xs-12">
-                              {{ Form::select('room_type_id',$roomtypes_list,null,['class'=>'form-control','placeholder'=>lang_trans('ph_select')]) }}    
+                              {{ Form::select('room_type_id',$roomtypes_list,null,['class'=>'form-control','placeholder' => lang_trans('ph_select')]) }}    
                           </div>
                       </div>
                       <div class="form-group">

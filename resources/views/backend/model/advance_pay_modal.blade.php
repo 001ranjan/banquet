@@ -7,25 +7,28 @@
       </div>
       {{ Form::open(array('url'=>route('advance-pay'),'id'=>"advance-pay-form")) }}
       {{ Form::hidden('id', $val->id) }}
-
         <div class="modal-body">
           <div class="form-group w-100">
               <label class="control-label col-sm-12 text-success">Previous Advance: {{($val->advance_payment) ? $val->advance_payment : 0}}</label>
           </div>
           <br/>
-          <div class="form-group w-100">
+          <div class="form-group">
               <label class="control-label col-sm-12">{{lang_trans('txt_amount')}}<span class="required">*</span></label>
               <div class="col-sm-12">
                   {{ Form::number('advance_payment',null,array('class'=>"form-control w-100", 'min'=>0, 'required'=>true, 'placeholder'=>'Add More Amount')) }}
               </div>
           </div>
-          <div class="form-group w-100">
-              <label class="control-label col-sm-12">{{lang_trans('txt_payment_mode')}}<span class="required">*</span></label>
-              <div class="col-md-12">
-                {{Form::select('payment_mode',config('constants.PAYMENT_MODES'),null,['class'=>"form-control", 'required'=>true, "placeholder"=>"--Select"])}}
-              </div>
+          <div class="form-group">
+            <label class="control-label col-sm-12">{{lang_trans('txt_payment_mode')}}<span class="required">*</span></label>
+            <div class="col-md-6">
+              {{ Form::select('payment_mode', config('constants.PAYMENT_MODES'), null, [
+                  'class' => "form-control", 
+                  'required' => true, 
+                  'placeholder' => "--Select--", 
+                  'style' => 'max-width: 180px;' // Shortens the dropdown width
+              ]) }}
+            </div>
           </div>
-          
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">{{lang_trans('btn_cancel')}}</button>

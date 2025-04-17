@@ -2,11 +2,37 @@
 @section('content')
 @php 
     $reservationId = Request::route('reservation_id');
-    $i=1; 
+    $i = 1; 
     $settings = getSettings();
     $gstPercFood = $settings['food_gst'];
     $cgstPercFood = $settings['food_cgst'];
 @endphp
+<Style>
+  .filter-button.active {
+      background-color: #007bff;
+      color: white;
+  }
+
+  .filter-button {
+      cursor: pointer;
+  }
+
+  .food-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+  }
+
+  .food-indicator.veg {
+      background-color: green; /* Green for Veg */
+  }
+
+  .food-indicator.non-veg {
+      background-color: red; /* Red for Non-Veg */
+  }
+</Style>
 <div class="">
   {{ Form::open(array('url'=>route('save-food-order'),'id'=>"food-order-form", 'class'=>"form-horizontal form-label-left",'files'=>true)) }}
   {{Form::hidden('gst_perc',$gstPercFood)}}
@@ -21,8 +47,7 @@
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content"> 
-                  <div class="row"> 
-                   
+                  <div class="row">
                     <div class="col-md-4 col-sm-4 col-xs-12">
                       <label class="control-label"> {{lang_trans('txt_fullname')}} </label>
                       {{Form::text('name',null,['class'=>"form-control col-md-6 col-xs-12", "id"=>"name", "placeholder"=>lang_trans('ph_enter').lang_trans('txt_fullname')])}}
@@ -72,11 +97,10 @@
                             <input type='text' id='txt_searchall' placeholder='Search Items...' class="form-control">
                         </div>
                         <div class="col-md-4 col-sm-4 col-xs-12">
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-outline-primary filter-button active" data-filter="all">All</button>
-                                <button type="button" class="btn btn-outline-success filter-button" data-filter="veg">Veg</button>
-                                <button type="button" class="btn btn-outline-danger filter-button" data-filter="non-veg">Non-Veg</button>
-                            </div>
+                          <div class="btn-group" role="group">
+                              <button type="button" class="btn btn-outline-primary filter-button active" data-filter="all">All</button>
+                              <button type="button" class="btn btn-outline-success filter-button" data-filter="veg">Veg</button>
+                          </div>
                         </div>
                         <div class="col-md-4 col-sm-4 col-xs-12 text-right">
                             <button class="btn btn-success" type="submit">{{ lang_trans('btn_submit') }}</button>
@@ -110,10 +134,88 @@
                     @endforeach
                 </table>
               </div>
+
+              <div class="row">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                  <div class="x_panel">
+                    <div class="x_title">
+                      <h2>{{lang_trans('heading_special_requirement')}}</h2>
+                      <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                      
+                      {{-- Add Special Row Starts Here --}}
+                      <div class="special_row_parent">
+                        <div class="row special_row_elem">
+                          <div class="col-md-2 col-sm-2 col-xs-12">
+                            <label class="control-label"> {{lang_trans('sidemenu_fooditem_name')}} </label>
+                            {{Form::text('special_requirement[name][]',null,['class'=>"form-control col-md-6 col-xs-12", "id"=>"person_name", "placeholder"=>lang_trans('sidemenu_fooditem_name')])}}
+                          </div>
+                          <div class="col-md-2 col-sm-2 col-xs-12">
+                            <label class="control-label"> {{lang_trans('sidemenu_select_category')}} </label>
+                            <select name="special_requirement[category_id][]" class="form-control col-md-6 col-xs-12">
+                              <option value="">{{ lang_trans('ph_select') }}</option>
+                              @foreach ($category_tree as $category)
+                                <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
+                              @endforeach
+                            </select>
+                          </div>
+                          <div class="col-md-2 col-sm-2 col-xs-12">
+                            <label class="control-label"> {{lang_trans('txt_type')}} </label>
+                            {{ Form::select('special_requirement[type][]', ['Veg' => 'Veg', 'Non-Veg' => 'Non-Veg'], null, ['class' => 'form-control col-md-6 col-xs-12', 'id' => 'type', 'placeholder' => lang_trans('ph_select')]) }}
+                          </div>
+                          <div class="col-md-2 col-sm-2 col-xs-12">
+                            <label class="control-label"> {{lang_trans('txt_price')}} </label>
+                            {{Form::number('special_requirement[price][]',null,['class'=>"form-control col-md-6 col-xs-12", "id"=>"price", "placeholder"=>lang_trans('txt_price')])}}
+                          </div>
+                          <div class="col-md-1 col-sm-1 col-xs-12"> 
+                            <label class="control-label"> &nbsp;</label><br/>
+                            <button type="button" class="btn btn-success add-special-row"><i class="fa fa-plus"></i></button>
+                          </div>
+                        </div>
+                      </div>
+                      {{-- Add Special Row Ends Here --}}
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {{-- Delete Special Row Starts Here --}}
+              <div class="colne_special_row_elem" style="display: none;">
+                <div class="row special_row_elem">
+                  <div class="col-md-2 col-sm-2 col-xs-12">
+                    {{Form::text('special_requirement[name][]',null,['class'=>"form-control col-md-6 col-xs-12", "id"=>"person_name", "placeholder"=>lang_trans('sidemenu_fooditem_name')])}}
+                  </div>
+                  <div class="col-md-2 col-sm-2 col-xs-12">
+                    <select name="special_requirement[category_id][]" class="form-control col-md-6 col-xs-12">
+                      <option value="">{{ lang_trans('ph_select') }}</option>
+                      @foreach ($category_tree as $category)
+                        <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  <div class="col-md-2 col-sm-2 col-xs-12">
+                    {{ Form::select('special_requirement[type][]', ['Veg' => 'Veg', 'Non-Veg' => 'Non-Veg'], null, ['class' => 'form-control col-md-6 col-xs-12', 'id' => 'type', 'placeholder' => lang_trans('ph_select')]) }}
+                  </div>
+                  <div class="col-md-2 col-sm-2 col-xs-12">
+                    {{Form::number('special_requirement[price][]',null,['class'=>"form-control col-md-6 col-xs-12", "id"=>"price", "placeholder"=>lang_trans('txt_price')])}}
+                  </div>
+                  <div class="col-md-1 col-sm-1 col-xs-12"> 
+                    <button type="button" class="btn btn-danger delete-special-row"><i class="fa fa-minus"></i></button>
+                  </div>
+                </div>
+              </div>
+              {{-- Delete Special Row Ends Here --}}
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <label class="control-label"> {{lang_trans('txt_remark')}} </label>
+                {{Form::textarea('remarks',null,['class'=>"form-control col-md-12 col-xs-12", "id"=>"remarks", "rows" => 3, "placeholder"=>lang_trans('txt_remark')])}}
+              </div>
+
           </div>
       </div>
   </div>
-
  
     <div class="row {{(1==1) ? 'hide_elem' : ''}}">
       <div class="col-md-12 col-sm-12 col-xs-12">
@@ -155,6 +257,7 @@
         </div>
       </div>
     </div>
+
   @if($categories->count())
     <div class="row">
       <div class="col-md-12 col-sm-12 col-xs-12">
@@ -171,36 +274,50 @@
 
 {{ Form::close() }}
 </div>    
-  {{-- require set var in js var --}}
+{{-- require set var in js var --}}
 <script>
   globalVar.page = 'food_order_page';
   globalVar.gstPercentFood = {{$gstPercFood}};
   globalVar.cgstPercentFood = {{$cgstPercFood}};
 
 
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-          const filterType = this.dataset.type; // Get the filter type (all, veg, non-veg)
-          const rows = document.querySelectorAll('.tr-items, .tr-bg');
-
-          rows.forEach(row => {
-              const rowType = row.getAttribute('data-type');
-              if (filterType === 'all' || rowType === filterType) {
-                  row.style.display = ''; // Show row
-              } else {
-                  row.style.display = 'none'; // Hide row
-              }
-          });
+  $(document).ready(function () {
+      // Handle filter button clicks
+      $('.filter-button').click(function () {
+          const filterType = $(this).data('filter'); // Get the filter type
+          
+          // Highlight the active button
+          $('.filter-button').removeClass('active');
+          $(this).addClass('active');
+          
+          if (filterType === 'all') {
+              // Show all rows for "All"
+              $('tr').show();
+          } else if (filterType === 'veg') {
+              // Hide all rows initially
+              $('tr').hide();
+              
+              // Show Veg items
+              $('tr[data-type="veg"]').show();
+              
+              // Recursively show parent categories if any child is visible
+              $('tr[data-type="veg"]').each(function () {
+                  let parentRow = $(this).prev();
+                  while (parentRow.hasClass('tr-bg')) {
+                      parentRow.show();
+                      parentRow = parentRow.prev();
+                  }
+              });
+          }
       });
   });
 
 
-  // JavaScript/jQuery validation example
-  $('#food-order-form').submit(function(e) {
-      if ($('input[name="selected_items[]"]:checked').length === 0) {
-          e.preventDefault(); // Prevent form submission
-          alert('Please select at least one food item.');
-      }
+  $("#food-item-checkbox").submit(function(e) {
+    if ($('input[name="item_qty[]"]:checked').length === 0) {
+      e.preventDefault(); // Prevent form submission
+      alert('Please select at least one food item.');
+    }
   });
 </script> 
 <script type="text/javascript" src="{{URL::asset('public/js/page_js/page.js')}}"></script>       

@@ -170,12 +170,19 @@ Route::prefix('admin')->group(function () {
             Route::get('food-order-table/{order_id}', 'FoodOrderTable')->name('food-order-table');
             Route::get('food-order-final/{order_id}', 'FoodOrderFinal')->name('food-order-final');
             Route::post('save-food-order', 'saveFoodOrder')->name('save-food-order');
+            Route::get('food-order-update/{order_id}', 'FoodOrderUpdate')->name('food-order-update');
+            // Fetch food Orders
+            Route::post('fetch-food-orders', 'fetchFoodOrders')->name('fetch-food-orders');
 
             Route::get('orders-list', 'listOrders')->name('orders-list');
             Route::get('order-invoice/{id}', 'orderInvoice')->name('order-invoice');
             Route::get('order-invoice-final/{order_id}', 'orderInvoiceFinal')->name('order-invoice-final');
             Route::get('kitchen-invoice/{order_id}/{order_type}', 'kitchenInvoice')->name('kitchen-invoice');
             Route::get('delete-order-item/{id}', 'deleteOrderItem')->name('delete-order-item');
+            // Kitchen Order Invoice Download
+            Route::get('kitchen-order-invoice/download/{id}', 'downloadKitchenInvoice')->name('kitchen-order-invoice');
+            Route::get('kitchen-invoice/edit/{id}', 'editKitchenInvoice')->name('kitchen-invoice-edit');
+            Route::post('kitchen-invoice/update/{id}', 'updateKitchenInvoice')->name('kitchen-invoice-update');
 
             Route::get('add-product', 'addProduct')->name('add-product');
             Route::get('edit-product/{id}', 'editProduct')->name('edit-product');

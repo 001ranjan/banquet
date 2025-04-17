@@ -1,8 +1,8 @@
 @extends('layouts.master_backend')
 @section('content')
 @php 
-$i = $j = 0; 
-$totalAmount = 0;
+  $i = $j = 0; 
+  $totalAmount = 0;
 @endphp
 <div class="">
   @if($list=='check_outs')
@@ -64,7 +64,8 @@ $totalAmount = 0;
                         <th>{{lang_trans('txt_guest_name')}}</th>
                         <th>{{lang_trans('txt_mobile_num')}}</th>
                         <th>{{lang_trans('txt_email')}}</th>
-                        <th>{{lang_trans('txt_room')}}</th>
+                        <th>{{lang_trans('sidemenu_rooms')}}</th>
+                        <th>{{lang_trans('heading_food')}}</th>
                         <th>{{lang_trans('txt_duration')}}</th>
                         <th>{{lang_trans('txt_booking_from')}}</th>
                         <th>{{lang_trans('txt_booking_to')}}</th>
@@ -73,7 +74,7 @@ $totalAmount = 0;
                       </tr>
                     </thead>
                     <tbody>
-                      @foreach($datalist as $k=>$val)
+                      @foreach($datalist as $k => $val)
                         @if($val->is_checkout==0)
                           @php 
                             $dateDiff = dateDiff($val->check_in, date('Y-m-d'), 'daysWIthSymbol');
@@ -89,10 +90,23 @@ $totalAmount = 0;
                           <td>
                             <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#booked_room_{{$val->id}}">{{lang_trans('btn_view')}}</button>
                             @include('backend/model/booked_rooms_modal',['val' => $val])
+                            {{-- @if($val->booked_rooms) 
+                                {{ $val->booked_rooms->map(fn($roomInfo) => $roomInfo->room->room_no)->join(', ') }}
+                            @endif --}}
                           </td>
-                          <td>{{ $val->duration_of_stay ?? "" }}</td>
-                          <td>{{dateConvert($val->check_in,'d-m-Y H:i')}}</td>
-                          <td>{{dateConvert($val->check_out,'d-m-Y H:i')}}</td>
+                          <td>
+                              <button 
+                                  class="btn btn-xs btn-primary btn-view-food-items" 
+                                  data-reservation-id="{{ $val->id }}" 
+                                  data-toggle="modal" 
+                                  data-target="#booked_food_{{$val->id}}">
+                                  {{ lang_trans('btn_view') }}
+                              </button>
+                              @include('backend/model/booked_food_modal',['val' => $val])
+                          </td>
+                          <td>{{ $val->duration_of_stay ?? "" }} {{ "days" }}</td>
+                          <td>{{dateConvert($val->check_in,'Y-m-d H:i:s')}}</td>
+                          <td>{{dateConvert($val->check_out,'Y-m-d H:i:s')}}</td>
                           <td>{{getCurrencySymbol()}} {{numberFormat($calc['finalRoomAmount']+$calc['finalOrderAmount']+$calc['additionalAmount'])}}</td>
                           <td>
                             @if(isPermission('add-housekeeping-order') && $val->booked_rooms->count())
@@ -112,17 +126,17 @@ $totalAmount = 0;
                             @endisPermission
 
                             @isPermission('view-reservation')
-                              <a class="btn btn-xs btn-primary" href="{{route('view-reservation',[$val->id])}}">{{lang_trans('btn_view')}}</a>
+                              <a class="btn btn-xs btn-primary" href="{{route('view-reservation',[$val->id])}}">{{lang_trans('btn_view_detail')}}</a>
                             @endisPermission
 
                             @isPermission('check-out-room')
                               <a class="btn btn-xs btn-danger" href="{{route('check-out-room',[$val->id])}}">{{lang_trans('btn_checkout')}}</a>
                             @endisPermission
-                            {{-- @if($dateDiff >= 0) --}}
+                            
                             @isPermission('swap-room')
                               <a class="btn btn-xs btn-success" href="{{route('swap-room',[$val->id])}}">{{lang_trans('btn_swap_room')}}</a>
                             @endisPermission
-                            {{-- @endif --}}
+                            
                             <br/>
                             <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'org'])}}" target="_blank">{{lang_trans('btn_invoice_room_org')}}</a>
                             {{-- <a class="btn btn-xs btn-danger" href="{{route('invoice',[$val->id,1,'inv_type'=>'dup'])}}" target="_blank">{{lang_trans('btn_invoice_room_dup')}}</a> --}}
@@ -167,7 +181,7 @@ $totalAmount = 0;
                         <th>{{lang_trans('txt_guest_name')}}</th>
                         <th>{{lang_trans('txt_mobile_num')}}</th>
                         <th>{{lang_trans('txt_email')}}</th>
-                        <th>{{lang_trans('txt_room')}}</th>
+                        <th>{{lang_trans('sidemenu_rooms')}}</th>
                         <th>{{lang_trans('txt_payment_status')}}</th>
                         <th>{{lang_trans('txt_checkin')}}</th>
                         <th>{{lang_trans('txt_checkout')}}</th>
@@ -279,5 +293,5 @@ $totalAmount = 0;
         </div>
     </div>
   @endif
-</div>       
+</div>
 @endsection

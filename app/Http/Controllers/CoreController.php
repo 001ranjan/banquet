@@ -10,6 +10,7 @@ use App\Models\PaymentHistory;
 use App\Models\MediaFile;
 use App\Models\Customer, App\Models\User;
 use App\Models\RoomCart;
+use Illuminate\Support\Facades\Log;
 
 class CoreController extends Controller {   
     
@@ -147,23 +148,59 @@ class CoreController extends Controller {
         return false;
     }
 
+    // function syncUserAndCustomerOld() {
+    //     $customers = Customer::whereNull('user_id')->get();
+    //     if($customers){
+    //         foreach ($customers as $key => $cust) {
+    //             if (!$cust->email) {
+    //                 // Skip customers with no email
+    //                 continue;
+    //             }
+    //             $userData = [
+    //                 'role_id'  => 6,
+    //                 'name'     => trim($cust->surname . ' ' . $cust->name),
+    //                 'gender'   => $cust->gender,
+    //                 'email'    => $cust->email,
+    //                 'password' => $cust->password,
+    //                 'mobile'   => $cust->mobile,
+    //                 'address'  => $cust->address,
+    //             ];
+    //             $userId = User::insertGetId($userData);
+    //             if($userId){
+    //                 Customer::where('id', $cust->id)->update(['user_id' => $userId]);
+    //             }
+    //         }
+    //     }
+    // }
+
     function syncUserAndCustomer() {
         $customers = Customer::whereNull('user_id')->get();
-        if($customers){
-            foreach ($customers as $key => $cust) {
-                $userData = [
-                    'role_id' => 6,
-                    'name' => $cust->name.' '.$cust->surname,
-                    'gender' => $cust->gender,
-                    'email' => $cust->email,
-                    'password' => $cust->password,
-                    'mobile' => $cust->mobile,
-                    'address' => $cust->address,
-                ];
+    
+        foreach ($customers as $cust) {
+            $email = $cust->email ?: 'user' . $cust->id . '@example.com';
+    
+            $userData = [
+                'role_id'    => 6,
+                'name'       => trim($cust->surname . ' ' . $cust->name),
+                'gender'     => $cust->gender,
+                'email'      => $email,
+                'password'   => $cust->password ?: Hash::make('password'),
+                'mobile'     => $cust->mobile,
+                'address'    => $cust->address,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+    
+            try {
                 $userId = User::insertGetId($userData);
-                if($userId){
+                if ($userId) {
                     Customer::where('id', $cust->id)->update(['user_id' => $userId]);
+                    // Log::info('User created successfully', ['user_id' => $userId, 'customer_id' => $cust->id]);
+                } else {
+                    // Log::error('User creation failed', ['customer_id' => $cust->id]);
                 }
+            } catch (\Exception $e) {
+                Log::error('Error creating user', ['customer_id' => $cust->id, 'error' => $e->getMessage()]);
             }
         }
     }
